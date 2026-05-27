@@ -4,22 +4,29 @@
 #include "Player/AuraPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Interaction/EnemyInterface.h"
 
 AAuraPlayerController::AAuraPlayerController()
 {
 	bReplicates = true;
 }
 
+void AAuraPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+	
+	CursorTrace();
+}
+
 void AAuraPlayerController::BeginPlay()
 {
-	
 	Super::BeginPlay();
 	check(AuraContext);
 
 	// 从当前拥有的本地玩家身上获取增强输入子系统
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
 		GetLocalPlayer());
-	
+
 	check(Subsystem);
 
 	// 将 Aura 的输入映射上下文添加到子系统中，优先级为 0（数字越小优先级越高）
@@ -42,7 +49,6 @@ void AAuraPlayerController::BeginPlay()
 
 void AAuraPlayerController::SetupInputComponent()
 {
-	
 	Super::SetupInputComponent();
 
 	// 将通用的 InputComponent 转换为增强输入组件，以便使用增强输入系统绑定动作
@@ -66,12 +72,45 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	// 根据 Yaw 旋转计算出世界空间中的右方向向量 (Y轴)
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	
+
 	if (APawn* ControllerPawn = GetPawn<APawn>())
 	{
 		// 向前/后移动：InputAxisVector.Y 正值表示向前，负值表示向后
 		ControllerPawn->AddMovementInput(ForwardDirection, InputAxisVector.Y);
 		// 向左/右移动：InputAxisVector.X 正值表示向右，负值表示向左
 		ControllerPawn->AddMovementInput(RightDirection, InputAxisVector.X);
+	}
+}
+
+void AAuraPlayerController::CursorTrace()
+{
+	FHitResult CursorHit;
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	if (!CursorHit.bBlockingHit) return;
+
+	LastActor = ThisActor;
+	ThisActor = CursorHit.GetActor();
+
+	if (LastActor == nullptr)
+	{
+		if (ThisActor != nullptr)
+		{
+			ThisActor->HighlightActor();
+		}
+	}
+	else
+	{
+		if (ThisActor == nullptr)
+		{
+			LastActor->UnHighlightActor();
+		}
+		else
+		{
+			if (LastActor != ThisActor)
+			{
+				LastActor->UnHighlightActor();
+				ThisActor->HighlightActor();
+			}
+		}
 	}
 }
