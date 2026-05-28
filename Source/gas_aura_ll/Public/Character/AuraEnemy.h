@@ -14,8 +14,10 @@ UCLASS()
 class GAS_AURA_LL_API AAuraEnemy : public AAuraCharacterBase, public IEnemyInterface
 {
 	GENERATED_BODY()
-	AAuraEnemy();
+	
 public:
+	AAuraEnemy();
+	
 	virtual void HighlightActor();
 	virtual void UnHighlightActor();
 
