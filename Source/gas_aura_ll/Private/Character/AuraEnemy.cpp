@@ -12,11 +12,11 @@ AAuraEnemy::AAuraEnemy()
 {
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
-	AbilitySystemComponent->CreateDefaultSubobject<UAuraAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
-	AttributeSet->CreateDefaultSubobject<UAuraAttributeSet>("AuraAttributeSet");
+	AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>("AuraAttributeSet");
 }
 
 void AAuraEnemy::HighlightActor()

@@ -8,11 +8,11 @@
 
 AAuraPlayerState::AAuraPlayerState()
 {
-	AbilitySystemComponent->CreateDefaultSubobject<UAuraAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UAuraAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	AttributeSet->CreateDefaultSubobject<UAuraAttributeSet>("AuraAttributeSet");
+	AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>("AuraAttributeSet");
 	//已经弃用的api,使用SetNetUpdateFrequency()和GetNetUpdateFrequency();
 	// NetUpdateFrequency = 100.f;
 	SetNetUpdateFrequency(100.f);
