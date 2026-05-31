@@ -27,10 +27,13 @@ void AAuraPlayerController::BeginPlay()
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
 		GetLocalPlayer());
 
-	check(Subsystem);
+	if (Subsystem)//多人时本地其他玩家存在合法的为空情况
+	{
+		// 将 Aura 的输入映射上下文添加到子系统中，优先级为 0（数字越小优先级越高）
+		Subsystem->AddMappingContext(AuraContext, 0);
+	}
 
-	// 将 Aura 的输入映射上下文添加到子系统中，优先级为 0（数字越小优先级越高）
-	Subsystem->AddMappingContext(AuraContext, 0);
+
 
 	// 显示鼠标光标（通常用于 UI 交互或人物界面）
 	bShowMouseCursor = true;
