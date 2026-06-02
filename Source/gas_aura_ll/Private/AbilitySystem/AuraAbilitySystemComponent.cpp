@@ -14,6 +14,9 @@ void UAuraAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* Ability
 {
 	FGameplayTagContainer TagContainer;
 	EffectSpec.GetAllAssetTags(TagContainer);
+
+	EffectAssetTags.Broadcast(TagContainer);
+
 	for (const FGameplayTag& Tag : TagContainer)
 	{
 		//ToDo: 广播tag给widgetController
