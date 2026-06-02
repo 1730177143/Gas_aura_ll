@@ -3,6 +3,9 @@
 
 #include "AbilitySystem/AuraAttributeSet.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -17,7 +20,7 @@ UAuraAttributeSet::UAuraAttributeSet()
 void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+	// 设置四个属性的复制条件：无条件复制，且每次变化都通知客户端
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Health, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana, COND_None, REPNOTIFY_Always)
@@ -32,14 +35,60 @@ void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
-	
+
 	if (Attribute == GetManaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
 	}
 }
 
+void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
+{
+	// Source = causer of the effect, Target = target of the effect (owner of this AS)
+	Props.EffectContextHandle = Data.EffectSpec.GetContext();
+	Props.SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+	// 如果源方 ASC 有效且其 ActorInfo 存在，继续提取源方的详细信息
+	if (IsValid(Props.SourceASC) && Props.SourceASC->AbilityActorInfo.IsValid()
+		&& Props.SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+	{
+		Props.SourceAvatarActor = Props.SourceASC->AbilityActorInfo->AvatarActor.Get();
+		Props.SourceController = Props.SourceASC->AbilityActorInfo->PlayerController.Get();
+		// 若未直接获取到控制器，尝试通过 Pawn 取得（适用于 AI 或非玩家控制的情况）
+		if (Props.SourceController == nullptr && Props.SourceAvatarActor != nullptr)
+		{
+			if (const APawn* Pawn = Cast<APawn>(Props.SourceAvatarActor))
+			{
+				Props.SourceController = Pawn->GetController();
+			}
+		}
+		// 如果源方控制器存在，则获取其控制的 Character
+		if (Props.SourceController)
+		{
+			Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
+		}
+		// 同样提取目标方的信息（拥有此 AttributeSet 的实体）
+		if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+		{
+			Props.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+			Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+			Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
+			Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
+		}
+	}
+}
 
+//需要导入"GameplayEffectExtension.h"
+void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+	
+	// 填充效果属性结构体，方便在后续逻辑中获取源和目标信息
+	FEffectProperties Props;
+	SetEffectProperties(Data, Props);
+}
+
+// 以下四个函数是网络复制的回调，当属性在客户端同步更新时被调用
+// 使用 GAMEPLAYATTRIBUTE_REPNOTIFY 宏可以确保 GAS 内部记录变更并触发相应的委托
 void UAuraAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Health, OldHealth);
