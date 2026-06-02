@@ -24,6 +24,10 @@ class GAS_AURA_LL_API UAuraAttributeSet : public UAttributeSet
 public:
 	UAuraAttributeSet();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	//属性实际改变前触发，但在此不应该发送事件或触发游戏逻辑
+	//进行数据钳制，仅仅改变了查询属性修改器后的值，不是最好选择
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Health, Category="基本属性")
 	FGameplayAttributeData Health;
