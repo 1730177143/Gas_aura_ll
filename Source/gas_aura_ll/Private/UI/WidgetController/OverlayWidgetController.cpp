@@ -37,10 +37,14 @@ void UOverlayWidgetController::BindCallBackToDependencies()
 		{
 			for (const FGameplayTag& Tag : TagContainer)
 			{
-				const FString Msg = FString::Printf(TEXT("GE Tag: %s"), *Tag.ToString());
-				GEngine->AddOnScreenDebugMessage(-1, 8.f, FColor::Blue, Msg);
-				//捕获this来访问成员函数
-				FUIWidgetRow* Row = GetDataTableRowByTags<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+				//"A.1".MatchesTag("A") will return True, "A".MatchesTag("A.1") will return False 
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+				if (Tag.MatchesTag(MessageTag))
+				{
+					//捕获this来访问成员函数
+					const FUIWidgetRow* Row = GetDataTableRowByTags<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+					MessageWidgetRowDelegate.Broadcast(*Row);
+				}
 			}
 		}
 	);
