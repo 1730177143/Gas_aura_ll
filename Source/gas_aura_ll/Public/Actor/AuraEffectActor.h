@@ -87,5 +87,8 @@ protected:
 	// 用于后续精确移除（离开区域时移除效果）
 	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveEffectHandles;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Applied Effects")
+	float ActorLevel = 1.f;
+
 private:
 };

@@ -34,9 +34,9 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 	// 将当前Actor设置为效果的来源对象，方便后续溯源
 	EffectContextHandle.AddSourceObject(this);
 
-	// 根据效果类、等级（1级）和上下文，生成一个待应用的效果规格句柄
+	// 根据效果类、等级和上下文，生成一个待应用的效果规格句柄
 	const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(
-		GameplayEffectClass, 1.f, EffectContextHandle);
+		GameplayEffectClass, ActorLevel, EffectContextHandle);
 
 	// 将规格应用到目标自身的ASC上，返回一个活跃效果句柄用于后续操作（如移除）
 	const FActiveGameplayEffectHandle ActiveGameplayEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(
