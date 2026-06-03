@@ -43,6 +43,8 @@ void AAuraCharacter::InitAbilityActorInfo()
 			AuraHUD->InitOverlay(AuraPlayerController, AuraPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
+	//可以只在服务器端调用，因为属性会被网络同步
+	InitializePrimaryAttributes();
 }
 
 void AAuraCharacter::PossessedBy(AController* NewController)

@@ -2,7 +2,7 @@
 
 
 #include "Character/AuraCharacterBase.h"
-
+#include "AbilitySystemComponent.h"
 // Sets default values
 AAuraCharacterBase::AAuraCharacterBase()
 {
@@ -27,4 +27,24 @@ void AAuraCharacterBase::BeginPlay()
 
 void AAuraCharacterBase::InitAbilityActorInfo()
 {
+}
+
+void AAuraCharacterBase::InitializePrimaryAttributes() const
+{
+	check(IsValid(GetAbilitySystemComponent()));
+	check(DefaultPrimaryAttributesClass);
+	/*
+	 *应用GE的流程
+	 * 1. 从ASC->MakeEffectContext()得到 FGameplayEffectContextHandle
+	 * 可选：FGameplayEffectContextHandle记录信息
+	 * 2. 向ASC->MakeOutgoingSpec()填入GameplayEffectClass、Level、FGameplayEffectContextHandle 得到 FGameplayEffectSpecHandle
+	 * 3. ASC->ApplyGameplayEffectSpecTo(Target/Self)(),填入解析，*FGameplayEffectSpecHandle.Data.Get()，(目标TargetASC)
+	 */
+
+	const FGameplayEffectContextHandle DefaultEffectContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	const FGameplayEffectSpecHandle DefaultEffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(
+		DefaultPrimaryAttributesClass, 1.f, DefaultEffectContextHandle);
+
+	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*DefaultEffectSpecHandle.Data.Get(),
+	                                                             GetAbilitySystemComponent());
 }
