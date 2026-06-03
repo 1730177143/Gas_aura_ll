@@ -38,8 +38,14 @@ protected:
 
 	virtual void InitAbilityActorInfo();
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributesClass;
 
-	void InitializePrimaryAttributes() const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributesClass;
+
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> AttributesClass, float Level) const;
+	void InitializeDefaultAttributes() const;
 };

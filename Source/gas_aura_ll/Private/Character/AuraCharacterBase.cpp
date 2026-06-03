@@ -29,10 +29,11 @@ void AAuraCharacterBase::InitAbilityActorInfo()
 {
 }
 
-void AAuraCharacterBase::InitializePrimaryAttributes() const
+void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> AttributesClass,
+                                           float Level) const
 {
 	check(IsValid(GetAbilitySystemComponent()));
-	check(DefaultPrimaryAttributesClass);
+	check(AttributesClass);
 	/*
 	 *应用GE的流程
 	 * 1. 从ASC->MakeEffectContext()得到 FGameplayEffectContextHandle
@@ -43,8 +44,15 @@ void AAuraCharacterBase::InitializePrimaryAttributes() const
 
 	const FGameplayEffectContextHandle DefaultEffectContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
 	const FGameplayEffectSpecHandle DefaultEffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(
-		DefaultPrimaryAttributesClass, 1.f, DefaultEffectContextHandle);
+		AttributesClass, Level, DefaultEffectContextHandle);
 
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*DefaultEffectSpecHandle.Data.Get(),
 	                                                             GetAbilitySystemComponent());
 }
+
+void AAuraCharacterBase::InitializeDefaultAttributes() const
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributesClass, 1.f);
+	ApplyEffectToSelf(DefaultSecondaryAttributesClass, 1.f);
+}
+
