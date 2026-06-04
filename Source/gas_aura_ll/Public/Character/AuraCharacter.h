@@ -17,6 +17,9 @@ class GAS_AURA_LL_API AAuraCharacter : public AAuraCharacterBase
 public:
 	AAuraCharacter();
 
+	/** Combat Interface */
+	virtual int32 GetPlayerLevel() override;
+	/** end Combat Interface */
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
