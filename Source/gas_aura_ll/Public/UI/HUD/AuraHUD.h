@@ -12,7 +12,7 @@ struct FWidgetControllerParams;
 class UOverlayWidgetController;
 class UAuraUserWidget;
 /**
- * 
+ * 构造和存储所有 Controller
  */
 UCLASS()
 class GAS_AURA_LL_API AAuraHUD : public AHUD
