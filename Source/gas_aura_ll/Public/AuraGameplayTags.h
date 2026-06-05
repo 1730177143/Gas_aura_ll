@@ -14,6 +14,8 @@ public:
 	static const FAuraGameplayTags& Get() { return GameplayTags; }
 	static void InitializeNativeGameplayTags();
 
+	//_ 替代了路径的.
+	FGameplayTag Attributes_Primary_Strength;
 protected:
 
 private:
