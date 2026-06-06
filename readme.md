@@ -60,7 +60,7 @@ WidgetController 是其控制层
 + <font style="color:#ED740C;background-color:#EFF0F0;">InitOverlay</font><font style="color:#F8B881;background-color:#EFF0F0;"> </font> 函数初始化控制层实例，将widget的控制层设置为初始化的实例，并且将其输出到屏幕，调用时机为Actor初始化GAS相关组件完成之后 <font style="color:#ED740C;background-color:#EFF0F0;">AAuraCharacter::InitAbilityActorInfo()</font>
 + `Get***WidgetController()`创建并返回对应 `WidgetController`单例
 
-### 属性菜单 attribute menu
+### 属性菜单 Attribute Menu
 
 ![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722521687884-bf3ed417-4e9c-4e0d-a507-f732f718d867.png)
 
@@ -72,11 +72,12 @@ WidgetController 是其控制层
 
 ![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722617953989-67d073aa-d222-450c-8525-62d50372801a.png)
 
-**<font style="background-color:#E7E9E8;">UAttributeInfo</font>**** 继承自 ****<font style="background-color:#E7E9E8;">UDataAsset</font>**** 作为信息表管理**
+**<font style="background-color:#E7E9E8;">UAttributeInfo</font>** 继承自 **<font style="background-color:#E7E9E8;">UDataAsset</font>** 作为信息表管理
 
-+ <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 装载Attribute相关的数据信息
-+ <font style="background-color:#FBF5CB;">FindAttributeInfoForTag</font> 通过Tag 查询对应的 <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 
++ <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 装载`Attribute`相关的数据信息
++ <font style="background-color:#FBF5CB;">FindAttributeInfoForTag</font> 通过`Tag` 查询对应的 <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 
 + 创建 `DataAsset` 采用 <font style="background-color:#E7E9E8;">AttributeInfo</font> 类型 配置相关信息 
++ 每个属性行有自己的`Tag`，仅仅在`Tag`正确时更新自己的属性x'x
 
 ## UAuraWidgetController-控制层
 
@@ -115,7 +116,7 @@ WidgetController 是其控制层
 
       - 如果该GE 的标签是 Message 的子标签，则 <font style="background-color:#EFF0F0;">MessageWidgetRowDel</font> 进行信息广播
 
-### UAttributeMenuWgtController
+### UAttributeMenuWidgetController
 
 继承 <font style="background-color:#EFF0F0;">UAuraWidgetControlle</font>  主要让属性菜单和属性数值交互。
 
