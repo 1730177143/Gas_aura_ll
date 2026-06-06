@@ -10,6 +10,7 @@ class UAttributeMenuWidgetController;
 class AAuraHUD;
 class UOverlayWidgetController;
 struct FWidgetControllerParams;
+
 /**
  * 
  */

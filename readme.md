@@ -1,3 +1,132 @@
+# MVC架构UI
+
+![UI的MVC](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721635876296-cf0e8f22-91f8-4900-8b3c-621621ad71e4.png)
+
+游戏UI采用MVC架构
+
+## UAuraUserWidget-视图层
+
+是项目中所有Wiget的基类
+
+WidgetController 是其控制层
+
+有设置Controller的函数 <font style="color:#ED740C;background-color:#EFF0F0;">SetWidgetController</font> ，并且在设置完成之后有函数事件 <font style="color:#ED740C;background-color:#EFF0F0;">OnWidgetControllerSetEnd</font>
+
+### WBP_Globe_ProgressBar—玩家状态控件
+
+编写如下父类控件，据此衍生出不同属性控件
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721659054035-8d538e70-c13f-48f5-9dd2-1cd1a161d51b.png)![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721659076379-9e8c277c-d4f9-49f0-a82c-95a1ffb15cc4.png)
+
++ 为了使其子类能够任意设置大小，因此采用**<font style="background-color:#D8DAD9;">SizeBox</font>**作为底层，然后在其下套上显示区（OverLap）
++ **<font style="background-color:#D8DAD9;">Image_Background</font>** 是UI的背景图片，这里就是一个金色的圆环，设置笔刷图像，然后**绘制为图像**
++ **<font style="background-color:#D8DAD9;">ProgressBar_Globe</font>**是百分比滑条，设置为圆形，从下到上填充；该滑条不需要背景，因此在样式中将背景图的着色alpha设置为0；让滑条范围在环内，设置边距为10；
++ **<font style="background-color:#D8DAD9;">Image_Glass</font>** 为了让整个控件存在玻璃反光效果，设置笔刷就行
++ <font style="background-color:#E7E9E8;">ProgressBar_Ghost</font> 影子百分比滑条，平滑过度向目标百分比值，该滑条为背景，营造游戏UI中差值缓慢消失的效果
+
+以上大部分内容为变量，可在子类更改
+
+### WBP_EffectMessage
+
+该控件为拾取道具时的播报，由Icon 和播报信息组成，并且添加了蹩脚的动画
 
 
-属性菜单的Controller接收ASC的多个属性变化委托，发布一个携带信息的结构体的统一的委托到UI
+
+1. 拾取道具 ->
+2. 应用GE (GE设置标签) -> 
+3. 绑定对自身应用GE 时广播的代理(  <font style="background-color:#E7E9E8;">OnGameplayEffectAppliedDelegateToSelf</font> ) -> 
+4. <font style="background-color:#E7E9E8;">EffectAssetTagsDel</font> 广播此时Tag ->
+5. 如果是相关Tag 则进行 信息播报
+
+### WBP_Button
+
+该项目的按钮大致一个样，因此做个基类按钮，并以此为基础派生宽按钮`WBP_WideButton`
+
+### WBP_Overlay
+
+将整个游戏窗口作为UI区域设置显示
+
++ 红蓝条的常驻显示 <font style="background-color:#EFF0F0;">WBP_Globe_ProgressBar</font> 
++ 拾取道具时添加道具拾取信息 <font style="background-color:#EFF0F0;">WBP_EffectMessage</font> 
+
+### AuraHUD
+
+玩家的HUD类
+
+- 持有所有的 `WidgetController`和`WidgetControllerClass`
+
++ <font style="background-color:#E7E9E8;">UAuraUserWidget</font> 类选择成员 <font style="background-color:#D8DAD9;">OverlayWidgetClass</font> ，HUD将此类创建后显示输出到屏幕
++ <font style="background-color:#D8DAD9;">UOverlayWidgetController</font> 类选择器，以此创建选择类型的 单例 作为视图与模型的控制层
++ <font style="color:#ED740C;background-color:#EFF0F0;">InitOverlay</font><font style="color:#F8B881;background-color:#EFF0F0;"> </font> 函数初始化控制层实例，将widget的控制层设置为初始化的实例，并且将其输出到屏幕，调用时机为Actor初始化GAS相关组件完成之后 <font style="color:#ED740C;background-color:#EFF0F0;">AAuraCharacter::InitAbilityActorInfo()</font>
++ `Get***WidgetController()`创建并返回对应 `WidgetController`单例
+
+### 属性菜单 attribute menu
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722521687884-bf3ed417-4e9c-4e0d-a507-f732f718d867.png)
+
+![图2 MVC属性菜单](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722617212849-f1fae7c9-379c-4eba-8dc0-982646b447ee.png)
+
+每个属性一个代理，然后通过代理广播属性的方式，来进行UI与数据的交互也还行，但是不方便维护，因为每增添一个属性，就要写更多的代码。
+
+因此，采用一个通用代理和结构体，进行通用性广播
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722617953989-67d073aa-d222-450c-8525-62d50372801a.png)
+
+**<font style="background-color:#E7E9E8;">UAttributeInfo</font>**** 继承自 ****<font style="background-color:#E7E9E8;">UDataAsset</font>**** 作为信息表管理**
+
++ <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 装载Attribute相关的数据信息
++ <font style="background-color:#FBF5CB;">FindAttributeInfoForTag</font> 通过Tag 查询对应的 <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 
++ 创建 `DataAsset` 采用 <font style="background-color:#E7E9E8;">AttributeInfo</font> 类型 配置相关信息 
+
+## UAuraWidgetController-控制层
+
+需要和玩家控制器、GAS、PlayerState、属性集进行交互，因此为了方便，创建了结构体 <font style="background-color:#D8DAD9;">FWidgetControllerParams</font> 储存交互类的地址
+
+项目中**每个** <font style="background-color:#EFF0F0;">UAuraUserWidget</font> 的子类都设置了同一控制层，让控制层分别处理内部显示，并非在总集
+
+<font style="background-color:#EFF0F0;">WBP_Overlay</font> 类下处理
+
+**函数：**
+
++ 虚函数 <font style="background-color:#EFF0F0;">BroadcastInitialValues</font> 
++ 虚函数 <font style="background-color:#E7E9E8;">BindCallbackToDependencies </font> 
+
+### UOverlayWidgetController
+
+该类继承 <font style="background-color:#EFF0F0;">UAuraWidgetController</font> 并且使该类为蓝图类，可蓝图使用（BlueprintType,Blueprintable）
+
++ 定义代理，表示属性相关的值发送变化
+
+辅助定义
+
++ <font style="background-color:#EFF0F0;">FUIWidgetRow</font> 继承自 <font style="background-color:#EFF0F0;">FTableRowBase</font> 让其成员可在表格行进行设置。成员为 Tag、信息、信息控件、信息图标
+
+成员
+
++ <font style="background-color:#EFF0F0;">MessageWidgetDataTable</font> 表示表格，用以选择 <font style="background-color:#EFF0F0;">FUIWidgetRow</font> 相关的信息的表格 获取相关已配置的数据
+
+函数
+
++ 重载函数 <font style="background-color:#EFF0F0;">BroadcastInitialValues</font> 使得属性被初始化时，广播代理
+
++ 重载函数 <font style="background-color:#E7E9E8;">BindCallbackToDependencies </font> 使得GAS的对应属性的代理绑定相应的值改变函数，进行相应代理的广播， 也就是广播转广播。
+
++ <font style="background-color:#EFF0F0;">EffectAssetTagsDel</font> 代理绑定 lambda 通过Tag查表获取信息,
+
+      - 如果该GE 的标签是 Message 的子标签，则 <font style="background-color:#EFF0F0;">MessageWidgetRowDel</font> 进行信息广播
+
+### UAttributeMenuWgtController
+
+继承 <font style="background-color:#EFF0F0;">UAuraWidgetControlle</font>  主要让属性菜单和属性数值交互。
+
+属性菜单的`Controller`接收ASC的多个属性变化委托，发布一个携带信息的结构体的统一的委托到UI。
+
+- 在`AttributeMenuWidgetController`声明委托，填入`FAuraAttributeInfo`结构体，发送到`ui`.
+- `ui`在蓝图拆包填入。
+
+函数
+
++ 重载函数 <font style="background-color:#EFF0F0;">BroadcastInitialValues</font> 通过循环遍历 <font style="background-color:#EFF0F0;">UAttributeInfo</font> 的 <font style="background-color:#EFF0F0;">AttributeInformation</font> 成员，获取每个标签，并且进行转调 <font style="background-color:#EFF0F0;">BroadcastAttributeInfo</font> 
++ 重载函数 <font style="background-color:#E7E9E8;">BindCallbackToDependencies </font> 使得GAS的对应属性的代理绑定相应的值改变函数，进行相应代理的广播， 也就是广播转广播。
++ <font style="background-color:#EFF0F0;">BroadcastAttributeInfo</font> 通过标签 ，<font style="background-color:#EFF0F0;">UAttributeInfo</font> 中找到其结构体，结构体中获取到属性之后 广播值
+
