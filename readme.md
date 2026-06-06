@@ -1,3 +1,21 @@
+
+
+
+
+# GameplayTags
+
+## AuraGameplayTags
+
+## `AuraGameplayTags.h`
+
+**全局单例**，包含原生`Gameplay Tags`
+`InitializeNativeGameplayTags()`
+
+- 初始化并注册 `GameplayTag`,
+- 在`AuraAssetManager`中重写在引擎早期就会被调用的 `StartInitialLoading()`,并调用`InitializeNativeGameplayTags()`
+- 避免需要使用`Gameplay Tags`时为空
+
+
 # MVC架构UI
 
 ![UI的MVC](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721635876296-cf0e8f22-91f8-4900-8b3c-621621ad71e4.png)
@@ -77,7 +95,7 @@ WidgetController 是其控制层
 + <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 装载`Attribute`相关的数据信息
 + <font style="background-color:#FBF5CB;">FindAttributeInfoForTag</font> 通过`Tag` 查询对应的 <font style="background-color:#E7E9E8;">FAuraAttributeInfo</font> 
 + 创建 `DataAsset` 采用 <font style="background-color:#E7E9E8;">AttributeInfo</font> 类型 配置相关信息 
-+ 每个属性行有自己的`Tag`，仅仅在`Tag`正确时更新自己的属性x'x
++ 每个属性行有自己的`Tag`，仅仅在`Tag`正确时更新自己的属性信息
 
 ## UAuraWidgetController-控制层
 
@@ -130,4 +148,23 @@ WidgetController 是其控制层
 + 重载函数 <font style="background-color:#EFF0F0;">BroadcastInitialValues</font> 通过循环遍历 <font style="background-color:#EFF0F0;">UAttributeInfo</font> 的 <font style="background-color:#EFF0F0;">AttributeInformation</font> 成员，获取每个标签，并且进行转调 <font style="background-color:#EFF0F0;">BroadcastAttributeInfo</font> 
 + 重载函数 <font style="background-color:#E7E9E8;">BindCallbackToDependencies </font> 使得GAS的对应属性的代理绑定相应的值改变函数，进行相应代理的广播， 也就是广播转广播。
 + <font style="background-color:#EFF0F0;">BroadcastAttributeInfo</font> 通过标签 ，<font style="background-color:#EFF0F0;">UAttributeInfo</font> 中找到其结构体，结构体中获取到属性之后 广播值
+
+```c++
+/* 
+ * 定义 TStaticFuncPtr<T>，用来指代一种函数指针类型
+ * TBaseStaticDelegateInstance 包装一个普通的 C 风格静态函数（或非成员函数），使其能够作为 UE 的委托（Delegate）来使用
+ * FFuncPtr，它就是那个静态函数的原始指针类型
+ * 
+ * 定义了一个简短的模板别名 TStaticFuncPtr<T>，它实际代表 UE 静态委托内部所使用的原始函数指针类型。
+ * 它被用来声明一个 TMap，实现从 FGameplayTag 到属性获取函数的映射，从而可以动态地通过 Tag 查找 Attribute，
+ */
+
+template <class T>
+using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateUserPolicy>::FFuncPtr;
+
+//返回给 AttributeMenuWidgetController  ，将 FGameplayTag 和返回 Attribute 的静态函数指针FGameplayAttribute (*)()对应，使用时需要执行静态函数得到属性
+	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
+```
+
+
 

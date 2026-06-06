@@ -50,6 +50,19 @@ struct FEffectProperties
 	UPROPERTY()
 	ACharacter* TargetCharacter = nullptr;
 };
+//
+/* 创建 TBaseStaticDelegateInstance 委托，指定函数类型，内存/复制策略，默认 FDefaultDelegateUserPolicy，
+ *
+ * using 类似 typedef，但可以带模板参数 ,为任意函数签名 指定一个别名 
+ * 定义 TStaticFuncPtr<T>，用来指代一种函数指针类型
+ * TBaseStaticDelegateInstance 包装一个普通的 C 风格静态函数（或非成员函数），使其能够作为 UE 的委托（Delegate）来使用
+ * FFuncPtr，它就是那个静态函数的原始指针类型
+ * 
+ * 定义了一个简短的模板别名 TStaticFuncPtr<T>，它实际代表 UE 静态委托内部所使用的原始函数指针类型。
+ * 它被用来声明一个 TMap，实现从 FGameplayTag 到属性获取函数的映射，从而可以动态地通过 Tag 查找 Attribute，
+ */
+template <class T>
+using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateUserPolicy>::FFuncPtr;
 
 /**
  * 
@@ -63,6 +76,10 @@ public:
 	UAuraAttributeSet();
 	// 网络复制相关的生命周期设置
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	//返回给 AttributeMenuWidgetController  ，将 FGameplayTag 和返回 Attribute 的静态函数指针对应
+	//TStaticFuncPtr 是一个模板，指定类型FGameplayAttribute()
+	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 
 	/**GAS
 	属性分Base Value：持久化数值和Current Value：临时视图值

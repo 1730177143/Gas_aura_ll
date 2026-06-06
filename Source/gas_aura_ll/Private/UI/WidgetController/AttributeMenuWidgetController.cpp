@@ -10,10 +10,12 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 {
 	UAuraAttributeSet* AS = CastChecked<UAuraAttributeSet>(AttributeSet);
 	check(AttributeInfo);
-	// for (auto& Pair : AS->Tags)
-	// {
-	// 	BroadcastAttributeInfo(Pair.Key, Pair.Value);
-	// }
+	for (auto& Pair : AS->TagsToAttributes)
+	{
+		
+		// 加上() 调用静态函数 Pair.Value()，得到 FGameplayAttribute
+		BroadcastAttributeInfo(Pair.Key, Pair.Value());
+	}
 }
 
 void UAttributeMenuWidgetController::BindCallBackToDependencies()
