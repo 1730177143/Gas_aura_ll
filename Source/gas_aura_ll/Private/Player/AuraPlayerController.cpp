@@ -100,33 +100,21 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 
 void AAuraPlayerController::CursorTrace()
 {
-	FHitResult CursorHit;
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
 	LastActor = ThisActor;
 	ThisActor = CursorHit.GetActor();
 
-	if (LastActor == nullptr)
+	if (LastActor != ThisActor)
 	{
-		if (ThisActor != nullptr)
-		{
-			ThisActor->HighlightActor();
-		}
-	}
-	else
-	{
-		if (ThisActor == nullptr)
+		if (LastActor)
 		{
 			LastActor->UnHighlightActor();
 		}
-		else
+		if (ThisActor)
 		{
-			if (LastActor != ThisActor)
-			{
-				LastActor->UnHighlightActor();
-				ThisActor->HighlightActor();
-			}
+			ThisActor->HighlightActor();
 		}
 	}
 }
@@ -236,8 +224,8 @@ void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	{
 		//按住移动
 		FollowTime += GetWorld()->GetDeltaSeconds();
-		FHitResult CursorHit;
-		if (GetHitResultUnderCursor(ECC_Visibility, false, CursorHit))
+
+		if (CursorHit.bBlockingHit)
 		{
 			CachedDestination = CursorHit.ImpactPoint;
 		}
