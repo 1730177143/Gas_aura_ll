@@ -138,6 +138,14 @@
 2. 在`AuraGameplayTags`中添加原生`Gameplay Tag`
 3. 在编辑器中创建对应的InputAction，修改他们的输入空间为1维。并配置这些InputAction和物理按键的映射。创建DA_InputConfig，配置不同InputAction对应的Tag。
 
+ #### Input Component
+
+自定义一个Enhanced Input Component组件，提供一个绑定输入动作和回调函数的函数。对于每一个输入动作绑定三个函数，分别是按下，松开，保持按下。这三个函数均接受一个Tag。这个Tag是我们在InputConfig中对每个InputAction配置的Tag。我们可以在这三个函数中查找与Tag对应的GA，并执行相关的GA。
+
+最终我们对不同的GA配置不同的Tag就可以实现输入动作与GA的灵活配置
+
+在PlayerController中新增InputConfig，和动作回调函数。然后调用自定义输入组件中的绑定函数，把InputConfig和动作回调函数传递给自定义输入组件。
+
 ## GE
 
 
