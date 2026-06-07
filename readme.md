@@ -10,6 +10,41 @@
 
 <font style="background-color:#E7E9E8;">UAuraAssetManager</font> 继承 `UAssetManager` 在初始化引擎加载时 调用 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags::InitNaviveGameplayTags</font> 添加标签并且为 单例结构体 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font> 的成员赋值，为了方便直接通过 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font>  设置 Tag 和使用 Tag
 
+
+
+# Player
+
+操控**AuraCharacter**的子蓝图类
+
+## 控制器
+
+建立**<font style="color:#DF2A3F;background-color:#E7E9E8;">AAuraPlayerController</font>**类作为玩家的控制器类该类主要进行：
+
+- 设置增强输入系统，添加增强输入操作
+
+- 默认显示光标
+
+- 设置输入模式，使得鼠标不被锁定到窗口，窗口不隐藏鼠标
+
+- 添加移动输入，由于控制器旋转跟随视角，且项目为俯视角，因此需要获取控制器的Yaw旋转，并且以此获取向前和向右向量来添加移动输入
+
+- 重写**仅有玩家输入才tikc**的事件，在里面进行调用检测鼠标悬浮的对象，以达成鼠标悬浮交互的功能
+
+- 使用 资产管理(DataAsset) 进行**数据驱动输入操作**
+
+- 存在 资产数据 <font style="background-color:#EFF0F0;">InputConfig</font> 选择相应的输入操作资产
+  
+- 存在 <font style="background-color:#FBF5CB;">按住 按下 松开</font> 三种操作的回调函数，绑定到 <font style="background-color:#EFF0F0;">增强输入操作系统(UAuraInputComponent)</font> 
+  
+- 该绑定将 tag 和 回调函数进行了绑定，输入操作之后调用回调时，会把tag进行参数传入
+
+### 增强输入操作组件 AuraInputComponent
+
+![设置增强输入类型](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722964429074-edc321c3-de41-4c86-908a-232f8f0b45cf.png)主要是 模板函数 <font style="background-color:#FBF5CB;">BindAbilityActions</font> 
+
++ 接受不同的函数类型，来<font style="color:#DF2A3F;">进行输入操作和回调函数的绑定</font> ;
++ 接受 资产数据 <font style="background-color:#EFF0F0;">InputConfig</font> 将资产数据内的**<font style="color:#DF2A3F;">标签</font>****作为参数绑定到回调函数**
+
 # GAS
 
 ![GAS挂载对象](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721468623784-ef3919bf-4ac4-4bce-8ebd-c298ea25b105.png)
@@ -145,6 +180,16 @@
 最终我们对不同的GA配置不同的Tag就可以实现输入动作与GA的灵活配置
 
 在PlayerController中新增InputConfig，和动作回调函数。然后调用自定义输入组件中的绑定函数，把InputConfig和动作回调函数传递给自定义输入组件。
+
+####  实现根据输入动作的Tag查找包含相同Tag的Ability并激活该Ability
+
+在Controller中保存ASC的唯一指针，在输入动作绑定的函数中调用ASC的函数来进行处理。
+
+在ASC中根据输入动作包含的Tag选择包含该Tag的Ability执行。
+
+【动态添加Tag】在ASC的AddCharacterAbilities函数中，我们需要创建AbilitySpec，并在该Spec中添加startupTag。
+
+
 
 ## GE
 

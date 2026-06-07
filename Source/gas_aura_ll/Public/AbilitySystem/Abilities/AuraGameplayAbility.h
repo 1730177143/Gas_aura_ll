@@ -13,5 +13,9 @@ UCLASS()
 class GAS_AURA_LL_API UAuraGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
-	
+
+public:
+	//初始能力
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	FGameplayTag StartupInputTag;
 };
