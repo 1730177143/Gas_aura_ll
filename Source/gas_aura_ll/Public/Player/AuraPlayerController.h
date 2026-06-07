@@ -79,4 +79,7 @@ private:
 	//平滑移动路径
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline;
+	
+	//向路线上的节点移动
+	void AutoRun();
 };

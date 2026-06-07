@@ -206,7 +206,7 @@
 
 ------
 
-Navigation System中设置允许客户端的Navigation。
+**Navigation System中设置允许客户端的Navigation。**
 
 点击移动的实现思路：根据start和end的位置生成寻路点，根据这些点创建Spline线条，在每一tick中，角色寻找距离他最近的spline点，往这个点方向移动。让路径更加平滑。
 
