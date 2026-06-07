@@ -1,6 +1,99 @@
 
 
+**UE VERSION:** 5.6
 
+# 项目与引擎配置
+
+## 资源管理类UAuraAssetManager
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1722701474889-7b57f28b-3c10-4af3-bc6f-c1026fec9807.png)
+
+<font style="background-color:#E7E9E8;">UAuraAssetManager</font> 继承 `UAssetManager` 在初始化引擎加载时 调用 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags::InitNaviveGameplayTags</font> 添加标签并且为 单例结构体 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font> 的成员赋值，为了方便直接通过 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font>  设置 Tag 和使用 Tag
+
+# GAS
+
+![GAS挂载对象](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721468623784-ef3919bf-4ac4-4bce-8ebd-c298ea25b105.png)
+
+敌人类直接装载GAS相关组件
+
+但是玩家有其他需求，比如重生，切换，此时**<font style="color:#DF2A3F;">不希望GAS相关的组件被销毁之后由新的实例创建，而是希望保持</font>**，因此采用<font style="color:#DF2A3F;">挂载到</font>**<font style="color:#DF2A3F;">playerState</font>**<font style="color:#DF2A3F;">的方式</font>
+
+因此，会存在**<font style="color:#DF2A3F;background-color:#E7E9E8;">OwnerActor</font>**和**<font style="color:#DF2A3F;background-color:#E7E9E8;">AvatarActor</font>**的区别，设置时需要区别
+
+![GAS获取所有者](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721490576558-f8351f1e-200b-4f72-bdc7-680626f3d21d.png)
+
+如上图，因为玩家类的GAS挂载到PlayerState上，因此两个Actor的值不同。
+
+
+
+那么，什么时候设置组件的拥有者呢？AI那边自然是简单，因为GAS就在其Character上，因此BeginPlay时，设置必定有效。
+
+但是，玩家这边GAS的**OwnerActor**是**PlayerState**，**AvatarActor**是Character，而且还有网络复制，同步模式为<font style="color:rgb(31, 35, 40);">Mixed</font><font style="color:rgb(31, 35, 40);">（详情见该模式注意事项）</font>
+
+<font style="color:rgb(31, 35, 40);">首先，要清楚，</font>**<font style="color:#DF2A3F;">客户端的实例和服务器上的实例不会完全同时一样</font>**<font style="color:rgb(31, 35, 40);">，因此在客户端上调用对象返回的内容和服务器上调用对象的返回</font>**<font style="color:rgb(31, 35, 40);">可能存在不一样的情况</font>**<font style="color:rgb(31, 35, 40);">，因此 </font>**<font style="color:#DF2A3F;background-color:#EFF0F0;">复制</font>**<font style="color:rgb(31, 35, 40);"> 这个词用的很好 </font>**<font style="color:#DF2A3F;">表示两个实例</font>**<font style="color:rgb(31, 35, 40);">，所以设置GAS的拥有者存在服务端和客户端不同时机设置的情况</font>
+
+**<font style="color:#DF2A3F;">在pawn被控制时，这是服务端干的事，</font>**此时是**<font style="color:#DF2A3F;">服务端</font>****的GAS实例设置拥有者**
+
+**<font style="color:#DF2A3F;">在服务器发出有PlayerState的回调时 </font>**，此时是**<font style="color:#DF2A3F;">客户端</font>****的GAS实例进行设置拥有者**
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1721492214252-85062cf7-6a0f-4653-8360-8d550d04bf85.png)
+
+## UAuraAbilitySystemComponent
+
+## AuraGameplayAbility
+
+`GameplayAbility`
+
+1. 定义技能和能力
+2. 能力必须先授予ASC,
+   1. 通常在服务器端完成授予。
+   2. 产生一个`AbilitySpec`同步到客户端
+3. 必须被激活`Actived`才能使用
+4. 内置`cost`和`cooldown`
+5. 支持异步执行
+   1. 同时可以有多个副本
+6. Ability Tasks
+
+#### 为`character`添加能力
+
+- `AuraCharacterBase.h`
+  - 在`AuraCharacterBase`储存能力数组`TArray<TSubclassOf<UGameplayAbility>>`，
+  - 使用`AddCharacterAbilities()`调用`ASC`的`AddCharacterAbilities`添加能力,只在服务器端添加能力
+- `AuraAbilitySystemComponent.h`
+  - `void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);`
+  - 遍历`TArray`创建每一个`FGameplayAbilitySpec`
+  - `GiveAbility(FGameplayAbilitySpec)` 或 `GiveAbilityAndActiveOnce(FGameplayAbilitySpec)`(立即激活)赋予能力
+- `AuraCharacter.h`
+  - 通过`PossessedBy()`函数在服务器端调用`AddCharacterAbilities()`
+
+
+
+## GE
+
+
+
+## 自定义计算类 MMC
+自定义计算类
+1.  重写 `CalculateBaseMagnitude_Implementation `
+2.  创建 `FGameplayEffectAttributeCaptureDefinition` 结构体用于捕获属性
+3.  在构造函数 `UMMC_MaxHealth` 里使用 `AttributeToCapture` 捕获属性
+            使用 `AttributeSource` 设置属性来源
+            使用 `bSnapshot` 设置快照
+4.  `FGameplayEffectAttributeCaptureDefinition` 结构体加入 `TArray` 待捕获属性数组
+5.  在 `CalculateBaseMagnitude_Implementation` 中
+                                 使用 `Spec.Captured(Source/Target)Tags.GetAggregatedTags` 从源/目标获取`tags`
+                  创建 `FAggregatorEvaluateParameters` 并设置 `SourceTags` 和 `TargetTags`
+                  使用 `GetCapturedAttributeMagnitude` 将传入的 `float` 引用修改为捕获值
+
+`UMMC_MaxHealth` 返回 `80.f + 2.5f * Vigor + 10.f * PlayerLevel;`
+`UMMC_MaxMana`返回 `50.f + 2.5f * Intelligence + 15.f * PlayerLevel;`
+
+## 蓝图方法库AuraAbilitySystemBPLibary
+
+<font style="background-color:#EFF0F0;">AuraAbilitySystemBPLibary</font> 继承 自 <font style="background-color:#EFF0F0;">UBlueprintFunctionLibrary</font> ，提供返回`WidgetController`的蓝图节点
+
++ <font style="background-color:#FBF5CB;">GetOverlayWgtController</font>从`AuraHUD` 获取 <font style="background-color:#EFF0F0;">UOverlayWidgetController</font> 实例
++ `GetAttributeMenuWidgetController`从`AuraHUD` 获取 <font style="background-color:#EFF0F0;">UAttributeMenuWidgetController</font> 实例
 
 # GameplayTags
 
