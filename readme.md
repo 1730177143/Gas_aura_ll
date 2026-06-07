@@ -66,7 +66,77 @@
 - `AuraCharacter.h`
   - 通过`PossessedBy()`函数在服务器端调用`AddCharacterAbilities()`
 
+<font style="background-color:#E7E9E8;">AuraCharacterBase</font> 存在 <font style="background-color:#E7E9E8;">StartupAbilities</font> 用来储存 角色初始拥有的技能
 
+#### GameplayAbility Tag
+
+| Gameplay Tag (游戏性标签)                                 | Description (描述)                                           |
+| :-------------------------------------------------------- | :----------------------------------------------------------- |
+| **Ability Tags**<br>(能力标签)                            | 该能力拥有这些标签。                                         |
+| **Cancel Abilities with Tag**<br>(取消带有特定标签的能力) | 当执行此能力时，带有这些标签的能力会被取消。                 |
+| **Block Abilities with Tag**<br>(阻塞带有特定标签的能力)  | 当此能力处于激活状态时，带有这些标签的能力会被阻塞（无法使用）。 |
+| **Activation Owned Tags**<br>(激活时拥有的标签)           | 当此能力激活时，应用于激活所有者（Owner）的标签。如果在 `AbilitySystemGlobals` 中启用了 `ReplicateActivationOwnedTags`，这些标签会被网络复制（同步）。 |
+| **Activation Required Tags**<br>(激活所需标签)            | 只有当激活该能力的 Actor/组件拥有**所有**这些标签时，此能力才能被激活。 |
+| **Activation Blocked Tags**<br>(激活阻塞标签)             | 如果激活该能力的 Actor/组件拥有这些标签中的**任何一个**，此能力将被阻塞（无法激活）。 |
+| **Source Required Tags**<br>(源所需标签)                  | 只有当源（Source）Actor/组件拥有**所有**这些标签时，此能力才能被激活。 |
+| **Source Blocked Tags**<br>(源阻塞标签)                   | 如果源（Source）Actor/组件拥有这些标签中的**任何一个**，此能力将被阻塞。 |
+| **Target Required Tags**<br>(目标所需标签)                | 只有当目标（Target）Actor/组件拥有**所有**这些标签时，此能力才能被激活。 |
+| **Target Blocked Tags**<br>(目标阻塞标签)                 | 如果目标（Target）Actor/组件拥有这些标签中的**任何一个**，此能力将被阻塞。 |
+
+#### InstancingPolicy
+
+| Instancing Policy (实例化策略)                 | Description (描述)                                    | Details (详情)                                               |
+| :--------------------------------------------- | :---------------------------------------------------- | :----------------------------------------------------------- |
+| **Instanced Per Actor** (每个 Actor 一个实例)  | 为该能力创建单个实例。每次激活时都会重用该实例。      | 可以存储持久化数据。每次必须手动重置变量。                   |
+| **Instanced Per Execution** (每次执行一个实例) | 每次激活时创建新实例。                                | 在激活之间不存储持久化数据。性能低于“每个 Actor 一个实例”。  |
+| **Non-Instanced** (非实例化)                   | 仅使用类默认对象 (Class Default Object)，不创建实例。 | 无法存储状态，无法绑定到能力任务 (Ability Tasks) 的委托。这是三个选项中性能最好的。 |
+
+#### Net Execution Policy
+
+| Net Execution Policy (网络执行策略) | Description (描述)                                           |
+| :---------------------------------- | :----------------------------------------------------------- |
+| **Local Only** (仅本地)             | 仅在本地客户端运行。服务器不执行该能力。                     |
+| **Local Predicted** (本地预测)      | 在本地客户端激活，随后在服务器激活。使用预测机制。服务器可以回滚无效的更改。 |
+| **Server Only** (仅服务器)          | 仅在服务器运行。                                             |
+| **Server Initiated** (服务器发起)   | 先在服务器运行，然后在拥有的本地客户端运行。                 |
+
+`Local Only`只适合一些本地的能力视觉听觉效果
+
+`Local Predicted`适合在较高延迟网络环境下提高游戏的流畅度
+
+`Server Only`适合被动技能，持续监听类的技能。
+
+`Server Initiated` 应用场景很少。
+
+#### Replication Policy
+
+**注意：GA默认是复制的，我们不需要修改Replication Policy.**
+
+#### Things Not to Use: 不建议使用的事项
+
+##### Replication Policy 复制策略
+
+- 无用。请勿使用。有关 Epic 官方的解释，请参阅 Epic 的 Ability System Questions。
+- Gameplay Abilities（游戏能力）已经会自动从服务器复制给拥有者客户端（Owning Client）。
+  - 注意：Gameplay Abilities 不会在模拟代理（Simulated Proxies）上运行（请使用 GEs 和 GCs）。
+
+##### Server Respects Remote Ability Cancellation 服务器尊重远程能力取消
+
+- 这意味着当本地客户端（Client）的能力结束时，服务器的能力也会随之结束。
+  - 通常这不是个好主意；服务器的版本（权威性）才是最重要的。
+
+##### Replicate Input Directly 直接复制输入
+
+- 总是将输入的按下/释放事件复制给服务器。
+  - Epic 官方不鼓励这样做。
+
+#### 输入配置相关的Data Asset `AuraInputConfig`
+
+我们对每个输入都配置一个标签，例如WASD，运行时我们可以把不同的标签绑定到游戏技能上，例如D按下后，每个GA都可以收到，如果一个GA包含D的标签，这个GA就可以被激活
+
+1. 将`InputAction`和`Gameplay Tag`关联。创建一个InputConfig类Data Asset，然后再该类中创建一个结构体，该结构体包含输入动作和对应的Tag。再InputConfig类中保存该结构体的数组。并写一个根据TAG返回输入动作的查找函数。
+2. 在`AuraGameplayTags`中添加原生`Gameplay Tag`
+3. 在编辑器中创建对应的InputAction，修改他们的输入空间为1维。并配置这些InputAction和物理按键的映射。创建DA_InputConfig，配置不同InputAction对应的Tag。
 
 ## GE
 
