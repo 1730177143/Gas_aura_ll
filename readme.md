@@ -189,7 +189,28 @@
 
 【动态添加Tag】在ASC的AddCharacterAbilities函数中，我们需要创建AbilitySpec，并在该Spec中添加startupTag。
 
+#### 点击移动功能的实现
 
+> 实现按住移动功能
+
+在PlayerController添加一些和点击移动相关的辅助变量
+
+1. 如果是左键按下，则根据光标追踪的结果设置是否存在攻击目标。并将自动寻路标识设置为False（释放的时候才进行自动寻路）
+2. 如果是左键保持按下，判断是否存在攻击目标，如果存在，就执行技能（Ability）如果不存在，就开始移动，移动的时候进行光标追踪得到鼠标的世界坐标，计算角色的移动方向，调用AddMovementInput函数移动。
+
+
+
+> 实现点击移动功能（自动寻路）
+
+在世界中设置一个导航网格边界体
+
+------
+
+Navigation System中设置允许客户端的Navigation。
+
+点击移动的实现思路：根据start和end的位置生成寻路点，根据这些点创建Spline线条，在每一tick中，角色寻找距离他最近的spline点，往这个点方向移动。让路径更加平滑。
+
+![移动曲线](https://cdn.nlark.com/yuque/0/2024/png/36214189/1723048236064-b0b66e26-3f85-4edc-9080-f75556a0de9f.png)
 
 ## GE
 
