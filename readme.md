@@ -250,6 +250,12 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 
 所有发射投射物技能的基类
 
+#### 自定义AbilityTask -UTargetDataUnderMouse
+
+创建继承`AbilityTask`的`TargetDataUnderMouse`
+
+让投射物能正确向目标移动
+
 **函数**
 
 <font style="background-color:#FBF5CB;">SpawnProjectile</font> 
@@ -260,13 +266,25 @@ UAbilitySystemGlobals::Get().InitGlobalData();
   
 - 途中设置旋转，GE
 
+**执行** 
+
+- 播放施法蒙太奇，等待tag的通知—— <font style="background-color:#FBF5CB;">WaitGameplayEvent</font> 
+
+- Tag 由动画通知中重载<font style="background-color:#FBF5CB;">RecivedNotify</font> 的函数中发送(<font style="background-color:#FBF5CB;">SendGameplayTagToActor</font>)
+
+- AbillityTask类 <font style="background-color:#FBF5CB;">UTargetDataUnderMouse</font> 获取到一些鼠标下的消息
+
+- 重写 <font style="background-color:#FBF5CB;">Activate</font> 判断客户端与服务端，客户端直接广播  ,服务端监听之后 回调 再进行广播
+
+- <font style="background-color:#FBF5CB;">SendMouseCursorData</font> 整个期间被预测，向服务端发送包装数据，并且代理将其广播
+
 ### AbilityTask
 
 **AbilityTask知道自己所属的Ability**
 
 **GATask的局限性，只在本地执行，Task中广播的数据只有本地知道。GAS内置一个在客户端与服务端传递TargetData的机制。**
 
-### 为了正常使用ASC的TargetData同步功能，需要在自定义AssetManager中
+#### 为了正常使用ASC的TargetData同步功能，需要在自定义AssetManager中
 
 ```c++
 void UAuraAssetManager::StartInitialLoading()
@@ -277,15 +295,73 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 }
 ```
 
-#### 角色转向 UTargetDataUnderMouse
-
-创建继承`AbilityTask`的`TargetDataUnderMouse`
+#### 角色转向 
 
 1. 运动扭曲技术来实现。让角色在空间中移动或者转向。
 2. 启动动画的跟运动，角色增加一个motion wrap组件，需要启动插件支持。
 3. 在动画蓝图中设置Wraping notify的范围，取消勾选translation，保持rotation，设置facingtarget。
 4. 在角色蓝图中设置一个custom event。该事件接受一个Vector设置wrap Target Name。
 5. 为了不必转换为具体的BP类，我们需要在战斗接口类中写一个蓝图实现函数来更新Wrap Target，该函数不必声明为虚函数。
+
+### Prediction
+
+客户端先行做出预测，然后将这个更改通知服务端，服务端确认是否合法，如果不合法，服务器撤销操作。
+
+Prediction的关键依赖于PredictionKey，客户端会发送一个Key给服务端，其他客户端则收到无效Key，服务端接受后，判断与该Key绑定的Side Effects是否合法，如果是则告诉客户端接受该key，否则告诉客户端不接受该key，客户端要进行回滚。key无法复制。
+
+#### GAS Automatically Predicts (GAS 自动预测的内容):
+
+- **Gameplay Ability Activation** (游戏能力激活)
+- **Triggered Events** (触发事件)
+- **Gameplay Effect Application** (游戏效果应用)
+  - Attribute Modifiers (not Execution Calculations) (属性修改器，不包括执行计算)
+  - GameplayTag Modification (GameplayTag 修改)
+- **Gameplay Cue Events** (Gameplay Cue 事件)
+  - From within a predicted Gameplay Ability (来自预测的游戏能力内部)
+  - Their own Events (它们自身的事件)
+- **Montages** (蒙太奇动画)
+- **Movement (UCharacterMovement)** (移动组件 (UCharacterMovement))
+
+#### GAS Does NOT Predict (GAS **不**预测的内容):
+
+- **Gameplay Effect Removal** (游戏效果移除)
+- **Gameplay Effect Periodic Effects** (游戏周期性效果)
+
+#### Ability Activation (能力激活)
+
+**TryActivateAbility:** (尝试激活能力)
+
+- **Client calls TryActivateAbility** (客户端调用 TryActivateAbility)
+  - New `FPredictionKey` (新的 `FPredictionKey`) —— "Activation Prediction Key" ("激活预测密钥")
+- **Client continues** (客户端继续执行)
+  - Calls `ActivateAbility` (调用 `ActivateAbility`) —— Activation Info (激活信息)
+- **Client does things** (客户端执行操作)
+  - Generates side effects (产生副作用) —— 对应图中的 Side Effect (副作用，均关联预测密钥)
+- **ServerTryActivateAbility** (服务器尝试激活能力)
+  - Server decides if valid (服务器决定是否有效)
+  - calls `ClientActivateAbilityFailed` (调用 `ClientActivateAbilityFailed`)
+  - or `ClientActivateAbilitySucceeded` (或 `ClientActivateAbilitySucceeded`)
+- **Client receives the Server's response** (客户端接收服务器的响应)
+  - If failure, kill the ability and undo side effects (如果失败，终止能力并撤销副作用)
+  - If success, side effects are valid. (如果成功，副作用有效。)
+- **ReplicatedPredictionKey replicates** (ReplicatedPredictionKey 进行复制/同步)
+  - `OnRep_PredictionKey`
+
+#### Gameplay Effects (游戏效果)
+
+- **Side effects** 
+- **Only applied on Clients if:** (仅在以下情况下应用于客户端：)
+  - There is a valid prediction key (存在有效的预测密钥)
+- **The following are predicted:** (以下内容会被预测：)
+  - Attribute Modifications (属性修改)
+  - Gameplay Tag Modifications (Gameplay Tag 修改)
+  - Gameplay Cues (Gameplay Cues / 游戏提示)
+- **When the FActiveGameplayEffect is created** (当 FActiveGameplayEffect 被创建时)
+  - Stores the Prediction Key (存储预测密钥) —— 对应的 Active Gameplay Effect 
+- **On the server, it gets the same key** (在服务器上，它获得相同的密钥)
+- **FActiveGameplayEffect is replicated** (FActiveGameplayEffect 被复制/同步)
+  - Client checks the key (客户端检查密钥)
+  - If they match, then "OnApplied" logic doesn't need to be done (如果匹配，则不需要执行 "OnApplied" 逻辑)
 
 ## GE
 

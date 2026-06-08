@@ -11,6 +11,7 @@
 #include "NavigationSystem.h"
 #include " Input/AuraInputComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Chaos/ChaosPerfTest.h"
 #include "Components/SplineComponent.h"
 #include "Interaction/EnemyInterface.h"
 
@@ -72,6 +73,8 @@ void AAuraPlayerController::SetupInputComponent()
 
 	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed,
 	                                       &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
+	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &AAuraPlayerController::ShiftPressed);
+	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AAuraPlayerController::ShiftReleased);
 }
 
 void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -180,7 +183,7 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	{
 		if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 	}
-	if (TargetingStatus != ETargetingStatus::TargetingEnemy)
+	if (TargetingStatus != ETargetingStatus::TargetingEnemy && !bShiftKeyDown)
 	{
 		const APawn* ControlledPawn = GetPawn();
 		if (FollowTime <= ShortPressThreshold && ControlledPawn)
@@ -217,7 +220,7 @@ void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 		return;
 	}
 	//检测是否选中目标
-	if (TargetingStatus == ETargetingStatus::TargetingEnemy)
+	if (TargetingStatus == ETargetingStatus::TargetingEnemy || bShiftKeyDown)
 	{
 		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);
 	}
