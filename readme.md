@@ -214,11 +214,19 @@
 
 ![移动曲线](https://cdn.nlark.com/yuque/0/2024/png/36214189/1723048236064-b0b66e26-3f85-4edc-9080-f75556a0de9f.png)
 
-### 发射投射物技能 AuraProjectileSpell
+### 发射投射物技能 
 
-所有发射投射物技能的基类
+#### AuraProjectile
+
+所有投射物的基类
 
 包含`ProjectileMovementComponent` 和 `SphereComponent`
+
+绑定好的碰撞事件`OnSphereOverlap`
+
+#### AuraProjectileSpell
+
+所有发射投射物技能的基类
 
 
 
