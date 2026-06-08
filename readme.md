@@ -253,6 +253,8 @@
 
 **AbilityTask知道自己所属的Ability**
 
+**GATask的局限性，只在本地执行，Task中广播的数据只有本地知道。GAS内置一个在客户端与服务端传递TargetData的机制。**
+
 #### 角色转向 UTargetDataUnderMouse
 
 创建继承`AbilityTask`的`TargetDataUnderMouse`
