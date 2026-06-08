@@ -7,6 +7,7 @@
 #include "AuraProjectileSpell.generated.h"
 
 class AAuraProjectile;
+class UGameplayEffect;
 /**
  * 
  */
@@ -29,4 +30,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	int32 NumProjectiles = 5;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };

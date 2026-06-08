@@ -54,4 +54,6 @@ void AAuraEnemy::InitAbilityActorInfo()
 	// 通知自定义 ASC：ActorInfo 已设置完毕，可以绑定内部委托
 	// 这样做使 Character 只需要单向依赖 ASC，ASC 自身负责处理效果事件
 	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+
+	InitializeDefaultAttributes();
 }
