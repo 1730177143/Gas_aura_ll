@@ -19,4 +19,5 @@ public:
 protected:
 	//引擎早期就会被调用
 	virtual void StartInitialLoading() override;
+	
 };

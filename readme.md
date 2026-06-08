@@ -10,7 +10,18 @@
 
 <font style="background-color:#E7E9E8;">UAuraAssetManager</font> 继承 `UAssetManager` 在初始化引擎加载时 调用 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags::InitNaviveGameplayTags</font> 添加标签并且为 单例结构体 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font> 的成员赋值，为了方便直接通过 <font style="background-color:#E7E9E8;">FAuraGmaeplayTags</font>  设置 Tag 和使用 Tag
 
+### 为了正常使用ASC的TargetData同步功能，需要在自定义AssetManager中
 
+```c++
+void UAuraAssetManager::StartInitialLoading()
+{
+Super::StartInitialLoading();
+FAuraGameplayTags::InitializeNativeGameplayTags();
+UAbilitySystemGlobals::Get().InitGlobalData();
+}
+```
+
+#### 
 
 # Player
 
@@ -254,6 +265,17 @@
 **AbilityTask知道自己所属的Ability**
 
 **GATask的局限性，只在本地执行，Task中广播的数据只有本地知道。GAS内置一个在客户端与服务端传递TargetData的机制。**
+
+### 为了正常使用ASC的TargetData同步功能，需要在自定义AssetManager中
+
+```c++
+void UAuraAssetManager::StartInitialLoading()
+{
+Super::StartInitialLoading();
+FAuraGameplayTags::InitializeNativeGameplayTags();
+UAbilitySystemGlobals::Get().InitGlobalData();
+}
+```
 
 #### 角色转向 UTargetDataUnderMouse
 
