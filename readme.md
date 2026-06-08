@@ -77,7 +77,7 @@
 
 ## AuraGameplayAbility
 
-`GameplayAbility`
+### `GameplayAbility`
 
 1. 定义技能和能力
 2. 能力必须先授予ASC,
@@ -165,6 +165,8 @@
 - 总是将输入的按下/释放事件复制给服务器。
   - Epic 官方不鼓励这样做。
 
+### 输入启动能力
+
 #### 输入配置相关的Data Asset `AuraInputConfig`
 
 我们对每个输入都配置一个标签，例如WASD，运行时我们可以把不同的标签绑定到游戏技能上，例如D按下后，每个GA都可以收到，如果一个GA包含D的标签，这个GA就可以被激活
@@ -189,7 +191,7 @@
 
 【动态添加Tag】在ASC的AddCharacterAbilities函数中，我们需要创建AbilitySpec，并在该Spec中添加startupTag。
 
-#### 点击移动功能的实现
+### 点击移动功能的实现
 
 > 实现按住移动功能
 
@@ -211,6 +213,16 @@
 点击移动的实现思路：根据start和end的位置生成寻路点，根据这些点创建Spline线条，在每一tick中，角色寻找距离他最近的spline点，往这个点方向移动。让路径更加平滑。
 
 ![移动曲线](https://cdn.nlark.com/yuque/0/2024/png/36214189/1723048236064-b0b66e26-3f85-4edc-9080-f75556a0de9f.png)
+
+### 发射投射物技能 AuraProjectileSpell
+
+所有发射投射物技能的基类
+
+包含`ProjectileMovementComponent` 和 `SphereComponent`
+
+
+
+
 
 ## GE
 
