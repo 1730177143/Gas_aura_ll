@@ -216,6 +216,17 @@
 
 ### 发射投射物技能 
 
+> **实现投掷物技能**
+
+1. 创建一个投掷物类（Actor）
+2. 配置ProjectileMovementComponent组件。
+3. 定义一个GA类，当GA激活后在角色武器的顶端生成一个投掷物类。（c++设置）
+4. GA激活后播放蒙太奇（在GA蓝图中设置）。
+5. 【下面修改3，4的生成时机】
+6. 在GA播放蒙太奇之后，等待GameplayEvent事件。蒙太奇的某个时间点发送GameplayEvent。
+7. 为了发送GameplayEvent，需要先制作GameplayEventNotify蓝图（继承Animnotify类），在该蓝图中重写接受信息事件，在接收到信息后给Actor发送一个GameplayEvent通知。之后在蒙太奇的某个时间节点添加一个该类型的通知。这样蒙太奇发送通知的时候，就会执行GameplayEventNotify蓝图中的接收信息事件，然后发送给Actor一个GameplayEvent通知。
+8. GA接收到GameplayEvent事件后（GampelayTag标识该事件），调用c++中的函数（BlueprintCallable），生成投掷物类。
+
 #### AuraProjectile
 
 所有投射物的基类
