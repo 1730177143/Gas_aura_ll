@@ -249,9 +249,19 @@
   
 - 途中设置旋转，GE
 
+### AbilityTask
 
+**AbilityTask知道自己所属的Ability**
 
+#### 角色转向 UTargetDataUnderMouse
 
+创建继承`AbilityTask`的`TargetDataUnderMouse`
+
+1. 运动扭曲技术来实现。让角色在空间中移动或者转向。
+2. 启动动画的跟运动，角色增加一个motion wrap组件，需要启动插件支持。
+3. 在动画蓝图中设置Wraping notify的范围，取消勾选translation，保持rotation，设置facingtarget。
+4. 在角色蓝图中设置一个custom event。该事件接受一个Vector设置wrap Target Name。
+5. 为了不必转换为具体的BP类，我们需要在战斗接口类中写一个蓝图实现函数来更新Wrap Target，该函数不必声明为虚函数。
 
 ## GE
 
