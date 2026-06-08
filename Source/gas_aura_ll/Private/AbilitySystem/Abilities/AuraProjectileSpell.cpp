@@ -12,6 +12,10 @@ void UAuraProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Hand
                                            const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
+
+void UAuraProjectileSpell::SpawnProjectile()
+{
 	//限制只能服务器生成
 	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
 	if (!bIsServer) return;
@@ -35,9 +39,4 @@ void UAuraProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		//ToDo: 添加伤害 GE
 		Projectile->FinishSpawning(SpawnTransform);
 	}
-}
-
-void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag,
-                                           bool bOverridePitch, float PitchOverride)
-{
 }
