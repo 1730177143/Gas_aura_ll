@@ -7,6 +7,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "gas_aura_ll/gas_aura_ll.h"
 // Sets default values
 AAuraProjectile::AAuraProjectile()
 {
@@ -19,6 +20,7 @@ AAuraProjectile::AAuraProjectile()
 	SetRootComponent(Sphere);
 
 	Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Sphere->SetCollisionObjectType(ECC_Projectile);
 	Sphere->SetCollisionResponseToAllChannels(ECR_Ignore);
 	Sphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	Sphere->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
