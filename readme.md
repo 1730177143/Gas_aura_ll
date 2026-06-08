@@ -554,5 +554,10 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 ```
 
+# 敌人血条
 
+在`AuraEnemy`添加`UWidgetComponent`
 
+创建`WBP_ProgressBar`
+
+将敌人自身作为`WidgetController`监听生命值发委托
