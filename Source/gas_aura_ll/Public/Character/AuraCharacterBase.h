@@ -32,6 +32,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName WeaponTipSocketName;
+
+	virtual FVector GetCombatSocketLocation() override;
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
@@ -56,6 +60,7 @@ protected:
 
 	//应该只在服务器端添加能力
 	void AddCharacterAbilities();
+
 private:
 	//一开始需要被赋予的初始能力
 	UPROPERTY(EditAnywhere, Category = "Abilities")

@@ -228,6 +228,16 @@
 
 所有发射投射物技能的基类
 
+**函数**
+
+<font style="background-color:#FBF5CB;">SpawnProjectile</font> 
+
+- 仅服务器生成技能
+  
+- 从接口获取生成位置 进行延迟生成
+  
+- 途中设置旋转，GE
+
 
 
 
