@@ -21,7 +21,120 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 }
 ```
 
-#### 
+# Actor
+
+## AAuraEffectActor
+
+进行某些GAS相关的触发
+
+定义的其他辅助类型
+
++ <font style="background-color:#E7E9E8;">EEffectApplicationPolicy</font> <font style="background-color:#E7E9E8;">EEffectRemovalPolicy</font> GE的应用时机和移除时机
++ <font style="background-color:#E7E9E8;">FEffectWithPolicy</font>  GE的结构体，存在GE的类，GE的应用和移除时机，是否销毁Actor
+
+组件
+
++ 静态网格体（根）
++ 碰撞（用做重叠检测）
++ <font style="background-color:#E7E9E8;">FEffectWithPolicy</font> 结构体数组
+
+# Character类
+
+![画板](https://cdn.nlark.com/yuque/0/2024/jpeg/36214189/1721324949717-935992ed-8cf4-43bc-8a19-3fce385f55c4.jpeg)
+
+
+
+项目所有Character都继承**AAuraCharacterBase**,并由其分出敌人和玩家类
+
+
+
+函数：
+
++ <font style="background-color:#E7E9E8;">InitializePrimaryAttribute</font> 通过GE初始化部分属性，在 <font style="background-color:#E7E9E8;">InitAbilityActorInfo</font> 中调用
+
+## AAuraEnemy
+
+不同哥布林建立了不同的蓝图类（枪哥布林，弹弓哥布林...），而不是同一蓝图类因为武器不同而状态不同
+
+
+
+因为所有敌人动画逻辑一样，资源不一样，因此建立了动画模板**ABP_Enemy**，子类不同的敌人类型动画蓝图只需对其继承，更改不同的动画资源即可
+
+### 接口IEnemyInterface
+
+游戏是俯视角游戏，不少操作需要鼠标指针交互，因此需要设计鼠标悬浮的响应
+
+鼠标悬浮至不同的对象，需要其做出不同的反应，因此设计一个接口，响应被鼠标悬浮的事件
+
++ 高亮和取消高亮
+
+### 接口 ICombatInterface
+
+通过这个接口处理一些战斗的接口交互
+
++ <font style="background-color:#EFF0F0;">GetPlayerLevel</font> 获取实例的等级
++ <font style="background-color:#FBF5CB;">GetCombatSocktLocation</font> 获取插槽位置，用于定位生成的技能
++ <font style="background-color:#FBF5CB;">SetFaceingTargetLoc</font> 用 BlueprintImplementableEvent 宏修饰，旨在蓝图中覆盖，实现设置运动扭曲的相关配置
+
+## AuraCharacter
+
+因为俯视角游戏，镜头默认不旋转，因此不能让角色旋转继承控制器的旋转了，而且摄像机也一样，禁用控制器的旋转
+
+函数
+
++ <font style="background-color:#EFF0F0;">InitAbilityActorInfo</font> 初始化GAS的 Onwer 和 Avatar, 初始化UI的控制层
+
+### PlayerState
+
+切换角色，角色重生**<font style="color:#DF2A3F;">不希望重写构造设置一些内容</font>**，因此将角色的部分内容放置到该类中
+
+保存玩家状态，包括将Gas挂载到这个下面
+
+成员变量
+
++ 等级 Level : 没必要放入Attribute，非浮点，不需要和GAS其他强互动，但是部分属性依赖此进行计算
+
+
+
+## 角色类型与配置Character Classes
+
+面对不同的角色类型，要怎样进行配置与初始化?
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1723740767688-7550a0ed-5d8a-4b9c-a420-ecebdebf6ad2.png)
+
++ 创建 `UCharacterClassInfo` 数据资产。
+
++ 创建 `ECharacterClass` 枚举。
+
++ 为**属性**创建曲线表。
+
+      - a. `CT_WarriorPrimaryAttributes`（战士主要属性）
+      
+      - b. `CT_RangerPrimaryAttributes`（游侠主要属性）
+      
+      - c. `CT_ElementalistPrimaryAttributes`（元素师主要属性）
+
++ 为主要属性、次要属性和关键属性创建 GE（Gameplay Effect，游戏效果）
+
+      - a. 主要属性不同 次要属性和关键属性靠同一GE计算
+
++ 有共享技能和效果。
+
++ 使用数据资产初始化属性的函数。
+
+> 创建DataAsset
+
+1. 在CharacterClassInfo类中创建一个枚举标识不同的职业
+2. 创建一个结构体FCharacterClassDefaultInfo，表示不同的职业的不同primaryAttribute GE
+3. 在CharacterClassInfo类中保存一个Map，key为枚举，value为FCharacterClassDefaultInfo
+4. 早CharacterClassInfo类中存储通用的secondary和baseAttribute初始GE。并提供一个根据枚举获取不同职业的PrimaryAttribute初始化GE
+5. 在编辑器中创建这些GE，并在DataAsset蓝图中配置这些GE
+
+> 根据DataAsset初始化敌人信息
+
+1. 把DA存放在GameMode中。
+2. 在蓝图可调用函数库中设置一个初始化属性得函数，该函数根据传入的CharacterClass，Level和ASC初始化角色属性。
+3. 在敌人基类中新增一个类别属性，将角色基类的初始化默认属性函数设置为虚函数，主角直接用角色基类的实现，敌人积累重写该实现。在重写过程中调用蓝图可调用函数库中的函数，传入敌人的类别，等级和敌人的ASC。
 
 # Player
 
