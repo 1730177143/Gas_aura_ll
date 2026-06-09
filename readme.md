@@ -130,6 +130,11 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 4. 早CharacterClassInfo类中存储通用的secondary和baseAttribute初始GE。并提供一个根据枚举获取不同职业的PrimaryAttribute初始化GE
 5. 在编辑器中创建这些GE，并在DataAsset蓝图中配置这些GE
 
+> 填写Curve Tables
+
+- 直接填写，选择插值
+- CSV/json格式,修改，导入
+
 > 根据DataAsset初始化敌人信息
 
 1. 把DA存放在GameMode中。
