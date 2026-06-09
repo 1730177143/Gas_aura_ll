@@ -17,7 +17,7 @@ class GAS_AURA_LL_API UAuraProjectileSpell : public UAuraGameplayAbility
 	GENERATED_BODY()
 
 protected:
-	//实际上是激活能力，不要直接调用它
+	//实际上是直接激活能力，不要直接调用它
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                             const FGameplayAbilityActivationInfo ActivationInfo,
 	                             const FGameplayEventData* TriggerEventData) override;

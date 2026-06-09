@@ -397,6 +397,22 @@ if (HasAuthority())
   
 - 途中设置旋转，GE
 
+<font style="background-color:#FBF5CB;">EventActivateAbility</font> 
+
+- 调用自写的 AbilityTask <font style="background-color:#FBF5CB;">TargetDataUnderMouse</font> 获取鼠标下的信息，等待消息的回调执行技能释放
+  
+- 设置运动扭曲的目标，播放施法动画，等待动画通知发送tag 而生成发送物
+
+OnSphereOverlap
+
+- 触碰之后播放效果。
+  
+- 服务器进行销毁发射物
+  
+- 可能存在客户端还未播放效果，导致服务器删除发射物之后，客户端没办法播放效果，因此加个标记进行**判断客户端是否已经播放效果，如果没有，则在销毁时，客户端再进行播放**
+
+
+
 **执行** 
 
 - 播放施法蒙太奇，等待tag的通知—— <font style="background-color:#FBF5CB;">WaitGameplayEvent</font> 
@@ -504,6 +520,16 @@ Prediction的关键依赖于PredictionKey，客户端会发送一个Key给服务
 
 1. 在AS中设置一个Meta Attribute IncomingDamage。
 2. 在PostGE函数中判断修改的属性是否是IncomingDamage属性，如果是，就处理伤害，然后把IncomingDamage属性设置为0。可以在这里判断角色是否死亡。
+
+> 技能的伤害
+
+1. 角色技能带有一个GESpecHandle，但是GE的伤害应该由技能指定，因此我们把GE的Modify设置为Caller，即该值由Spec直接赋值或者蓝图赋值
+2. Set by Caller 的数值是成对出现的，我们需要先创建一个Tag，Damage。
+3. 然后在GeSpec中添加一个键值对，Key是Damage,Value是具体的数值。外界通过key就可以拿到该Spec的伤害数值。
+4. 在GE蓝图中，设置Set by Caller，同时选择对应的Tag。因为一个GE可能由多个对象设置不同的Tag和对应的value.
+5. 在GA基类中存储一张表，对不同的GA设置不同的等级变化伤害。
+6. 在具体的GA中配置表格。我们可以把不同的表格存放在同个Curve Table Asset中。
+7. 在GA生成Spec的时候访问表格中的数据得到与当前GA等级绑定的Damage。
 
 ## GE
 

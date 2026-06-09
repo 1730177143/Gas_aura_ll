@@ -50,6 +50,7 @@ struct FEffectProperties
 	UPROPERTY()
 	ACharacter* TargetCharacter = nullptr;
 };
+
 //
 /* 创建 TBaseStaticDelegateInstance 委托，指定函数类型，内存/复制策略，默认 FDefaultDelegateUserPolicy，
  *
@@ -206,6 +207,15 @@ public:
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Mana)
 
+	/*
+	 * Meta Attributes
+	 * 只是个临时的占位符，我们只在服务端用它做计算
+	 */
+
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	FGameplayAttributeData IncomingDamage;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, IncomingDamage);
+
 	// 以下为网络复制时的回调，用于客户端接收属性变化后处理 UI 或效果
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth) const;
@@ -258,4 +268,6 @@ public:
 private:
 	// 从 Data 中提取源和目标的信息填充到 Props，供 PostGameplayEffectExecute 使用
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
+
+	void HandleIncomingDamage(const FEffectProperties& Props);
 };
