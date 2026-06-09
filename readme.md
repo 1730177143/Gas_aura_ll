@@ -494,9 +494,18 @@ Prediction的关键依赖于PredictionKey，客户端会发送一个Key给服务
   - Client checks the key (客户端检查密钥)
   - If they match, then "OnApplied" logic doesn't need to be done (如果匹配，则不需要执行 "OnApplied" 逻辑)
 
+## Meta Attributes
+
+> 介绍
+
+普通属性是可以复制的，元属性不会被复制，他只是个临时的占位符，我们只在服务端用它做计算，计算完后应用到真正的属性上。
+
+> IncomingDamage
+
+1. 在AS中设置一个Meta Attribute IncomingDamage。
+2. 在PostGE函数中判断修改的属性是否是IncomingDamage属性，如果是，就处理伤害，然后把IncomingDamage属性设置为0。可以在这里判断角色是否死亡。
+
 ## GE
-
-
 
 ## 自定义计算类 MMC
 自定义计算类
