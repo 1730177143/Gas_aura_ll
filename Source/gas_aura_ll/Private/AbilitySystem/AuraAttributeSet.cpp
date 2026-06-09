@@ -129,6 +129,13 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 
 		//可以在这里判断角色是否死亡
 		const bool bFatal = NewHealth <= 0.f;
+		if (!bFatal)
+		{
+			//根据特定标签激活
+			FGameplayTagContainer TagContainer;
+			TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
+			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+		}
 	}
 }
 
