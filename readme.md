@@ -557,6 +557,20 @@ GA流程：
 8. 在AS中判断受击时是否死亡，如果没有就激活受击能力（根据TAG）
 9. 修改GA的instance策略为Per Actor。在动画播放结束后移除 GE效果。
 
+### Character Death
+
+> 可以用使用GA来实现，敌人和主角通用。也可以在战斗接口中声明一个DIe虚函数，处理服务端的死亡逻辑，然后调用RPC函数处理服务端和客户端的角色死亡动画（物理效果。）。由于我们在AS中调用战斗接口的DIe函数，而AS只在服务端执行，客户端复制，因此DIE函数不需要特殊声明即可实现只在服务端被调用。
+
+应用伤害后调用接口类的 <font style="background-color:#FBF5CB;">Die</font> 函数，AuraCharacterBase中 <font style="background-color:#FBF5CB;">Die</font> 转调 <font style="background-color:#FBF5CB;">MulticastHandleDeath</font>（<font style="background-color:#E6DCF9;">服务器进行广播执行</font>）并且 取消武器的 绑定至网格
+
+<font style="background-color:#FBF5CB;">MulticastHandleDeath</font> 中开启布娃娃，并且替换溶解材质，调用蓝图重载的函数，改变材质参数
+
+实现溶解效果：
+
+1. 在敌人基类中增加MaterialInstance成员，新增一个启动时间线的蓝图实现函数，该函数根据时间返回不同的值。新增一个溶解函数。该溶解函数创建动态材质实例，动态材质的参数基于时间线设置。
+2. 在多播RPC函数中调用溶解函数（同步溶解效果）
+3. 注意如果为武器和角色均设置溶解效果时不能使用相同的时间线。
+
 ## GE
 
 ## 自定义计算类 MMC

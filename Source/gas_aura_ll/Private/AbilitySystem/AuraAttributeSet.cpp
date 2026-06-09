@@ -129,7 +129,15 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 
 		//可以在这里判断角色是否死亡
 		const bool bFatal = NewHealth <= 0.f;
-		if (!bFatal)
+		if (bFatal)
+		{
+			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
+			if (CombatInterface)
+			{
+				CombatInterface->Die();
+			}
+		}
+		else
 		{
 			//根据特定标签激活
 			FGameplayTagContainer TagContainer;

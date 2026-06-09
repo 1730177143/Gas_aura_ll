@@ -27,6 +27,13 @@ public:
 	
 	/** Combat Interface */
 	virtual UAnimMontage* GetHitReactMontage_Implementation() override;	
+	//只在服务器处理 Die 逻辑
+	virtual void Die() override;
+	/** end Combat Interface */
+	
+	//多播RPC,可靠。在服务器和客户端处理表现
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastHandleDeath();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
