@@ -510,7 +510,9 @@ Prediction的关键依赖于PredictionKey，客户端会发送一个Key给服务
   - Client checks the key (客户端检查密钥)
   - If they match, then "OnApplied" logic doesn't need to be done (如果匹配，则不需要执行 "OnApplied" 逻辑)
 
-## Meta Attributes
+## Damage系统
+
+### Meta Attributes
 
 > 介绍
 
@@ -530,6 +532,30 @@ Prediction的关键依赖于PredictionKey，客户端会发送一个Key给服务
 5. 在GA基类中存储一张表，对不同的GA设置不同的等级变化伤害。
 6. 在具体的GA中配置表格。我们可以把不同的表格存放在同个Curve Table Asset中。
 7. 在GA生成Spec的时候访问表格中的数据得到与当前GA等级绑定的Damage。
+
+### Hit React
+
+> 使用GA来实现，敌人通用
+
+在属性值修改中 (<font style="background-color:#FBF5CB;">PostGameplayEffectExecute</font>),让血量减少伤害之后，如果没有死亡，则进行受击
+
+通过Tag激活相应GA
+
+GA流程：
+
++ 应用GE (上受击TAG)
++ 播放受击动画
++ 移除GE
+
+1. 制作一个可以给角色添加Tag的GE。TAG为Dmage
+2. 制作一个Hit React GE，授予GE Target ASC HitReact标签
+3. 在敌人类中监听标签的变化（增删）。
+4. 制作一个受击GA，在该GA中应用GE添加标签，之后获取不同角色的受击蒙太奇（角色转换为`ICombatInterface`类型使用接口重写蓝图原生事件实现），然后等待蒙太奇播放结束移除GE，移除受击标签。
+5. 在敌人血量大于0且受击时激活受击GA。具体实现步骤如下：
+6. 在CharacterClassInfo增加一个全角色均有的GA数组
+7. 在蓝图可调用函数库中定义一个基于初始能力的静态函数，遍历初始能力GA。
+8. 在AS中判断受击时是否死亡，如果没有就激活受击能力（根据TAG）
+9. 修改GA的instance策略为Per Actor。在动画播放结束后移除 GE效果。
 
 ## GE
 
