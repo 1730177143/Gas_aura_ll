@@ -56,7 +56,7 @@ protected:
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> AttributesClass, float Level) const;
-	void InitializeDefaultAttributes() const;
+	virtual void InitializeDefaultAttributes() const;
 
 	//应该只在服务器端添加能力
 	void AddCharacterAbilities();

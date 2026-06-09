@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "Components/WidgetComponent.h"
 #include "gas_aura_ll/gas_aura_ll.h"
@@ -85,5 +86,14 @@ void AAuraEnemy::InitAbilityActorInfo()
 	// 这样做使 Character 只需要单向依赖 ASC，ASC 自身负责处理效果事件
 	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 
-	InitializeDefaultAttributes();
+	// GameMode 仅存在于服务器端
+	if (HasAuthority())
+	{
+		InitializeDefaultAttributes();
+	}
+}
+
+void AAuraEnemy::InitializeDefaultAttributes() const
+{
+	UAuraAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }

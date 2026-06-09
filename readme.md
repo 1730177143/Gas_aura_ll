@@ -139,7 +139,20 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 
 1. 把DA存放在GameMode中。
 2. 在蓝图可调用函数库中设置一个初始化属性得函数，该函数根据传入的CharacterClass，Level和ASC初始化角色属性。
-3. 在敌人基类中新增一个类别属性，将角色基类的初始化默认属性函数设置为虚函数，主角直接用角色基类的实现，敌人积累重写该实现。在重写过程中调用蓝图可调用函数库中的函数，传入敌人的类别，等级和敌人的ASC。
+3. 在敌人基类中新增一个类别属性，将角色基类的初始化默认属性函数`InitializeDefaultAttributes`设置为虚函数，主角直接用角色基类的实现，敌人基类重写该实现。在重写过程中调用蓝图可调用函数库中的函数，传入敌人的类别，等级和敌人的ASC。`UAuraAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);`
+
+> 遇到错误客户端AuraGameMode空指针
+
+原因：GameMode仅在服务器存在
+
+解决：调用前判断服务器
+
+```c++
+if (HasAuthority())
+{
+    InitializeDefaultAttributes();
+}
+```
 
 # Player
 
