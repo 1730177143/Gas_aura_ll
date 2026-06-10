@@ -575,6 +575,53 @@ GA流程：
 
 通过`DamageTextComponent`使用`WBP_DamageText`
 
+> Floating text
+
+1. 创建一个Widget，设置动画，在构造函数中播放动画。
+2. 创建一个WidgetComponent C++类。声明一个蓝图实现函数。设置一个该类的蓝图实例，为该Component配置第一步创建的Widget，实现蓝图实现函数（设置伤害数字）
+3. 在PlayerController中配置该Component，并实现显示伤害数字函数，在该函数中检查目标Actor和Component，如果有效创建一个组件，添加到目标 Actor的跟组件上，然后立刻分离，并设置具体的伤害数值。
+4. 在AS中调用PC中的显示伤害函数。
+5. 组件设置延时1秒自动销毁
+6. 缩放的时候不超过1就不会出现屏幕空间字体的像素化
+
+### Execution Calculation (执行计算)
+
+**UGameplayEffectExecutionCalculation**
+
+* **Capture Attributes** 捕获属性
+
+* 可以修改**不止一个** Attribute (属性)
+
+* **Can have programmer logic** (可以包含程序逻辑)
+
+* **No prediction** (无预测机制)
+
+* **Only Instant or Periodic Gameplay Effects** 仅适用于 即时 或 周期性 Gameplay Effects 
+
+* **捕获过程不会运行 PreAttributeChange**；因此在那里完成的任何 clamping (数值钳制/限制) 必须重新执行
+
+* **Only executed on the Server from Gameplay Abilities **
+
+  **with Local Predicted, Server Initiated, and Server Only **
+
+  **Net Execution Policies** 
+
+  - 仅在服务器 端执行，
+  - 且通过Gameplay Abilities应用，
+  - 并使用以下 Net Execution Policies (网络执行策略) 
+    - Local Predicted (本地预测), 
+    - Server Initiated (服务器发起)
+    - Server Only (仅服务器) 
+
+#### Snapshotting (Source) (快照机制 - 来源方)
+
+*   **Snapshotting captures the Attribute value when the Gameplay Effect Spec is created**
+    Snapshotting (快照) 会在 Gameplay Effect Spec (游戏效果规范) 创建时捕获 Attribute (属性) 值。
+*   **Not snapshotting captures the Attribute value when the Gameplay Effect is applied**
+    非 Snapshotting 会在 Gameplay Effect (游戏效果) 被应用时捕获 Attribute (属性) 值。
+*   **From the Target, the value is captured on Effect Application only**
+    对于 Target (目标)，值仅在 Effect Application (效果应用) 时捕获。
+
 ## GE
 
 ## 自定义计算类 MMC
