@@ -584,7 +584,7 @@ GA流程：
 5. 组件设置延时1秒自动销毁
 6. 缩放的时候不超过1就不会出现屏幕空间字体的像素化
 
-### Execution Calculation (执行计算)
+### Execution Calculation (执行计算)EC
 
 **UGameplayEffectExecutionCalculation**
 
@@ -616,11 +616,19 @@ GA流程：
 #### Snapshotting (Source) (快照机制 - 来源方)
 
 *   **Snapshotting captures the Attribute value when the Gameplay Effect Spec is created**
-    Snapshotting (快照) 会在 Gameplay Effect Spec (游戏效果规范) 创建时捕获 Attribute (属性) 值。
+    Snapshotting (快照) 会在 Gameplay Effect Spec创建时捕获 Attribute (属性) 值。
 *   **Not snapshotting captures the Attribute value when the Gameplay Effect is applied**
-    非 Snapshotting 会在 Gameplay Effect (游戏效果) 被应用时捕获 Attribute (属性) 值。
+    非 Snapshotting 会在 Gameplay Effect被应用时捕获 Attribute (属性) 值。
 *   **From the Target, the value is captured on Effect Application only**
     对于 Target (目标)，值仅在 Effect Application (效果应用) 时捕获。
+
+### 伤害自定义计算类EC
+
+1. 创建一个EC类别，在GE_damage蓝图中移除Modify增加Execute
+2. 在EC类重写Execute_Implementation来执行自定义计算逻辑
+3. 在EC的cpp文件中，定义一个单例结构体用于存放所有需要捕获的属性，捕获属性的prop和def用 宏来简化。
+4. 在Execute_Implementation中自定义计算Damage，考虑格挡率，穿透等属性。
+5. 伤害计算需要的一些系数存放在一张表中，CharacterClassInfo中保存该表的指针。在蓝图可调用函数中创建一个函数返回CharacterClassInfo的指针。
 
 ## GE
 
