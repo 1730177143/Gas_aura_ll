@@ -13,7 +13,9 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "Chaos/ChaosPerfTest.h"
 #include "Components/SplineComponent.h"
+#include "GameFramework/Character.h"
 #include "Interaction/EnemyInterface.h"
+#include "UI/Widget/DamageTextComponent.h"
 
 AAuraPlayerController::AAuraPlayerController()
 {
@@ -28,6 +30,22 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 
 	CursorTrace();
 	AutoRun();
+}
+
+void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+{
+	//IsValid 会额外检查是否待销毁
+	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
+	{
+		//动态创建手动注册
+		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		DamageText->RegisterComponent();
+		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(),
+		                              FAttachmentTransformRules::KeepRelativeTransform);
+		//创建后分离，执行动画
+		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		DamageText->SetDamageText(DamageAmount);
+	}
 }
 
 void AAuraPlayerController::BeginPlay()
