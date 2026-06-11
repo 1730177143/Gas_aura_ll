@@ -624,6 +624,8 @@ GA流程：
 
 ### 伤害自定义计算类EC
 
+
+
 1. 创建一个EC类别，在GE_damage蓝图中移除Modify增加Execute
 2. 在EC类重写Execute_Implementation来执行自定义计算逻辑
 3. 在EC的cpp文件中，定义一个单例结构体用于存放所有需要捕获的属性，捕获属性的prop和def用 宏来简化。

@@ -18,6 +18,7 @@ public:
 	UExecCalc_Damage();
 
 
+	//GE 应用时调用 Execute
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
 	                                    FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };
