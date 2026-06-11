@@ -99,7 +99,25 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	// If Block, halve the damage.	
 	Damage = bBlocked ? Damage / 2.f : Damage;
-	
+
+	//护甲穿透计算
+	float TargetArmor = 0.f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorDef, EvaluationParameters,
+	                                                           TargetArmor);
+	TargetArmor = FMath::Max<float>(TargetArmor, 0.f);
+
+	float SourceArmorPenetration = 0.f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().ArmorPenetrationDef,
+	                                                           EvaluationParameters, SourceArmorPenetration);
+	SourceArmorPenetration = FMath::Max<float>(SourceArmorPenetration, 0.f);
+
+
+	// 护甲穿透计无视目标部分护甲。
+	const float EffectiveArmor = TargetArmor * (100 - SourceArmorPenetration * 0.25f) / 100.f;
+
+
+	// 护甲会忽略一定比例的来袭伤害。
+	Damage *= (100 - EffectiveArmor * 0.25f) / 100.f;
 
 	//可以使用多个 AddOutputModifier 修改多个属性
 	const FGameplayModifierEvaluatedData EvaluatedData(UAuraAttributeSet::GetIncomingDamageAttribute(),
