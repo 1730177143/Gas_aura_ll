@@ -145,23 +145,25 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 			TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
 			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 		}
-		ShowFloatingText(Props, LocalIncomingDamage);
+		const bool bBlock = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+		const bool bCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+		ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCriticalHit);
 	}
 }
 
-void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage) const
+void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	if (!IsValid(Props.SourceCharacter) || !IsValid(Props.TargetCharacter)) return;
 	if (Props.SourceCharacter != Props.TargetCharacter)
 	{
 		if (AAuraPlayerController* PC = Cast<AAuraPlayerController>(Props.SourceCharacter->Controller))
 		{
-			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 			return;
 		}
 		if (AAuraPlayerController* PC = Cast<AAuraPlayerController>(Props.TargetCharacter->Controller))
 		{
-			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }

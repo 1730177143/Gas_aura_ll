@@ -32,7 +32,7 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 	AutoRun();
 }
 
-void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
 {
 	//IsValid 会额外检查是否待销毁
 	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
@@ -44,7 +44,7 @@ void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, 
 		                              FAttachmentTransformRules::KeepRelativeTransform);
 		//创建后分离，执行动画
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(DamageAmount);
+		DamageText->SetDamageText(DamageAmount, bBlockedHit,  bCriticalHit);
 	}
 }
 

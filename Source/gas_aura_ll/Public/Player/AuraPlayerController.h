@@ -38,7 +38,7 @@ public:
 
 	//Client RPC 由服务器调用，只会在拥有该 PlayerController 的那个客户端上执行,不使用 NetMulticast
 	UFUNCTION(Client, Reliable)
-	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter);
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
