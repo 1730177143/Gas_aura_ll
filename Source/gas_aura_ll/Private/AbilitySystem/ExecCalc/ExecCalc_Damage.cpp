@@ -63,7 +63,8 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	AActor* TargetAvatar = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
-
+	FGameplayEffectContextHandle EffectContextHandle = Spec.GetContext();
+	
 	int32 SourcePlayerLevel = 1;
 	if (SourceAvatar->Implements<UCombatInterface>())
 	{
@@ -135,6 +136,8 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 		FName("EffectiveArmor"), FString());
 	const float EffectiveArmorCoefficient = EffectiveArmorCurve->Eval(TargetPlayerLevel);
 
+	//将格挡与否加入 自定义的 GameplayEffectContext
+	UAuraAbilitySystemLibrary::SetIsBlockedHit(EffectContextHandle, bBlocked);
 	// 护甲会忽略一定比例的来袭伤害。
 	Damage *= (100 - EffectiveArmor * EffectiveArmorCoefficient) / 100.f;
 
@@ -163,6 +166,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
 
+	UAuraAbilitySystemLibrary::SetIsCriticalHit(EffectContextHandle, bCriticalHit);
 	// 如果暴击，伤害加倍，
 	Damage = bCriticalHit ? 2.f * Damage + SourceCriticalHitDamage : Damage;
 	

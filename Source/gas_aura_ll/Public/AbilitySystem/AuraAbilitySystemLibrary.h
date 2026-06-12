@@ -8,6 +8,7 @@
 #include "AuraAbilitySystemLibrary.generated.h"
 
 
+struct FGameplayEffectContextHandle;
 class UAttributeMenuWidgetController;
 class AAuraHUD;
 class UAbilitySystemComponent;
@@ -55,4 +56,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category="AuraAbilitySystemLibrary|CharacterClassDefaults")
 	static void GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC, ECharacterClass CharacterClass);
 	
+	/*
+	 * Effect Context Getters
+	 */
+
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static bool IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static bool IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle);
+	
+	/*
+	 * Effect Context Setters
+	 */
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetIsBlockedHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit);
+
+	/*
+	 * 如果参数是一个非常量引用，蓝图通常将其识别为一个输出参数
+	 * UPARAM(ref) 来明确告诉蓝图是 非常量引用的输入参数
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
+	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
+
 };
