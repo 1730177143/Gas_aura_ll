@@ -650,7 +650,7 @@ GA流程：
 
 1. 需要重写一些FGameplayEffectContext子类必须重写的虚函数。
 2. 自定义一个Ability System Global Class的子类，启用这个自定义的GE上下文。重写AllocGameplayEffectContext函数。，返回我们自定义的GEContext。
-3. 配置使用自定义的ASGC子类，在DefaultGame.ini中设置。
+3. 配置使用自定义的ASGC子类，在DefaultGame.ini中设置。或在项目设置里修改。
 4. 可以在ASGC中存放任意想全局访问的数据。
 
 ## 自定义计算类 MMC
