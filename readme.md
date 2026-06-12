@@ -634,6 +634,25 @@ GA流程：
 
 ## GE
 
+### FAuraGameEffectContext 自定义GE上下文
+
+原有 GEContex 无法满足现有需求（获取伤害是否暴击、格挡...），需要继承 GEContex，添加内容
+
+函数，因 Context 改变，AbilitySystemGlobals 也得重载
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1725090408241-acf5f1b8-6a7d-4ddd-a8b6-a4526547fecc.png)
+
+函数
+
++ <font style="background-color:#FBF5CB;">NetSerialize</font> 添加新变量的序列化
+
+> 在 GEContext中增加自定义内容，例如是否暴击，是否穿透
+
+1. 需要重写一些FGameplayEffectContext子类必须重写的虚函数。
+2. 自定义一个Ability System Global Class的子类，启用这个自定义的GE上下文。重写AllocGameplayEffectContext函数。，返回我们自定义的GEContext。
+3. 配置使用自定义的ASGC子类，在DefaultGame.ini中设置。
+4. 可以在ASGC中存放任意想全局访问的数据。
+
 ## 自定义计算类 MMC
 自定义计算类
 1.  重写 `CalculateBaseMagnitude_Implementation `
