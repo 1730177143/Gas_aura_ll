@@ -43,10 +43,6 @@ void UAuraAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Inp
 		{
 			//AbilitySpecInputPressed 通知能力，能力对应的按键被按下
 			AbilitySpecInputPressed(AbilitySpec);
-			if (!AbilitySpec.IsActive())
-			{
-				TryActivateAbility(AbilitySpec.Handle);
-			}
 		}
 	}
 }

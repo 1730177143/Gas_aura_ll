@@ -72,13 +72,9 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                       const FHitResult& SweepResult)
 {
-	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
-	if (LoopingSoundComponent)
-	{
-		LoopingSoundComponent->Stop();
-		LoopingSoundComponent->DestroyComponent();
-	}
+	//检测碰撞重叠的 Actor 
+	if (!IsValidOverlap(OtherActor)) return;
+	if (!bHit) OnHit();
 
 	if (HasAuthority())
 	{
@@ -92,4 +88,20 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 	{
 		bHit = true;
 	}
+}
+
+bool AAuraProjectile::IsValidOverlap(AActor* OtherActor)
+{
+	//重叠的 Actor 是自己的时候 不合法 ，不需要做任何事
+	// 获取效果起因者（通常是施法者）
+	AActor* Causer = DamageEffectParams.Data.IsValid()
+		                 ? DamageEffectParams.Data->GetContext().GetEffectCauser()
+		                 : nullptr;
+
+	// 避免自伤：若 OtherActor 是 Causer，或者没有 Causer 时无效
+	if (Causer == nullptr || Causer == OtherActor)
+	{
+		return false; 
+	}
+	return true;
 }

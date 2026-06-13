@@ -35,6 +35,7 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
 {
 	//IsValid 会额外检查是否待销毁
+	//IsLocalController 检查是否本地控制器， 避免服务器端和客户端都调用显示伤害数字
 	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
 	{
 		//动态创建手动注册
