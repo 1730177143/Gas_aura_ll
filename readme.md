@@ -944,7 +944,7 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 1. 在角色周围生成很多Item，根据自定义规则查询每条Item的得分，保留得分最高的Item。
 2. Item可以是Actor也可以是Location
 3. 直接创建一个EQS蓝图，然后生成不同的Item。
-4. 对不同的Item进行Trace【add Test Tracre，如果是选择留下成功Trace的，需要取消勾选Bool Mesh】，设置EQS Context蓝图来配置Trace目标。【重写Provice Actor】并查询所有的Character，找到AuraCharacter并返回。
+4. 对不同的Item进行Trace【add Test Tracre，如果是选择留下成功Trace的，需要取消勾选Bool Match】，设置EQS Context蓝图来配置Trace目标。【重写Provice Actor】并查询所有的Character，找到AuraCharacter并返回。
 5. 在此基础上基于测试距离。
 6. 查询返回的是值最大的结果
 7. 这里有一个小BUG，并没有忽略敌方Visibility，需要自定义EQS的 Trace过程中忽略带有EnemyTag的Actor。
