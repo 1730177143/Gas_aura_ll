@@ -902,6 +902,10 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 1. 服务可以挂载到任意节点，c++中覆写的服务tick必须在蓝图中重写Recive Tick AI才能被正确执行。
 2. 服务可自定义tick频率
 
+> 行为树服务
+
+蓝图类继承 `BTService_BlueprintBase`
+
 > BlackBoard
 
 1. 用于存储行为树中的变量。
