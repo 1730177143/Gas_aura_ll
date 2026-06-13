@@ -893,7 +893,7 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 > 行为树特点
 
-1. Selector会顺序执行他的子节点，一旦成功就返回，不会再执行其他子节点，
+1. Selector会从**左到右**顺序执行他的子节点，一旦**成功**就返回，不会再执行其他子节点，
 2. 服务一旦添加到节点上，就会按照 设定的 频率执行，只要这个分支在执行。
 3. 服务可以自定义，服务的tick间隔比较长
 
@@ -910,6 +910,21 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 1. 用于存储行为树中的变量。
 2. BlackBoard中的Key可以设置是否实例同步，如果实例同步，则所有该BlackBoard实例中的值相同。
+
+> 跟随功能
+
+为了使得敌人跟踪转向更丝滑，在敌人蓝图中取消勾选Use Controller Rotation。使用Movement Component的自动转向。
+
+对于GEActor额外添加一个变量来控制是否应用到敌人身上。在ApplyEffect，onbeginoverlap，endoverlap中都判断一下是否要应用到敌人身上，
+
+> Decorator-Blackboard
+
+1. 类似于条件判断，可以设置满足条件才继续执行
+2. 可以判断Blackboard中的条件，并且监听条件，也可以设置时间条件
+
+> Sequence
+
+类似Selector，会从**左到右**顺序执行他的子节点，一旦**失败**就返回，不会再执行其他子节点，
 
 # UE 5.6 编译错误记录
 
