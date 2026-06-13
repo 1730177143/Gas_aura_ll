@@ -931,6 +931,10 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 1. 蓝图类继承 `BTTask_BlueprintBase`
 2. 必须调用`FinishExecute`返回一个状态，否则会卡在这个任务
 
+> 攻击后换个位置
+
+1. 调用蓝图函数，Get Random Location In Navigable Radius。
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
