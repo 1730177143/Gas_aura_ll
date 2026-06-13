@@ -862,3 +862,231 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 创建`WBP_ProgressBar`
 
 将敌人自身作为`WidgetController`监听生命值发委托
+
+# 敌人AI
+
+普通敌人采用一个AI行为树，根据不同职业类型执行不同分支
+
+![EnemyAI](D:\GameProject\ue\gas_aura_ll\img\EnemyAI.png)
+
+### Next Steps
+
+1.  **Create an AI Controller class**
+    创建一个 AI Controller (AI控制器) 类
+2.  **Create a Blackboard and Behavior Tree**
+    创建一个 Blackboard (黑板) 和 Behavior Tree (行为树)
+3.  **Add a Blackboard Component and Behavior Tree Component to the AI Controller**
+    向 AI Controller (AI控制器) 添加 Blackboard Component (黑板组件) 和 Behavior Tree Component (行为树组件)
+4.  **Add a Behavior Tree to the Aura Enemy**
+    向 Aura Enemy  添加 Behavior Tree (行为树)
+5.  **Run the Behavior Tree**
+    运行 Behavior Tree (行为树)
+
+> AI控制器，Blackboard 和行为树。基础配置
+
+1. 在Build.cs中 添加和AI控制器相关的模块AIModule。
+2. 创建自定的AI控制器 。并创建蓝图。并创建行为树的黑板的蓝图。
+3. 设置敌人的Pawn控制器为 自定义的AI控制器蓝图，
+4. 自定义AI控制器中包含一个行为树组件。
+5. 敌人类中包含一个指向之定义AI控制器的指针，和一个行为树，在编辑器中配置行为树。
+6. 在敌人类中重写 PossessBy函数，获取指向之定义AI控制器的指针。之后调用AI控制器 的黑板组件的初始化黑板方法，并运行行为树。运行的行为树是在敌人基类蓝图中配置的的行为树蓝图。
+
+> 行为树特点
+
+1. Selector会顺序执行他的子节点，一旦成功就返回，不会再执行其他子节点，
+2. 服务一旦添加到节点上，就会按照 设定的 频率执行，只要这个分支在执行。
+3. 服务可以自定义，服务的tick间隔比较长
+
+> Service
+
+1. 服务可以挂载到任意节点，c++中覆写的服务tick必须在蓝图中重写Recive Tick AI才能被正确执行。
+2. 服务可自定义tick频率
+
+> BlackBoard
+
+1. 用于存储行为树中的变量。
+2. BlackBoard中的Key可以设置是否实例同步，如果实例同步，则所有该BlackBoard实例中的值相同。
+
+# UE 5.6 编译错误记录
+
+## Git 中文文件名
+
+### 错误现象
+使用 UnrealBuildTool 编译项目时，出现以下异常：
+
+```bash
+UnrealBuildTool failed with exit code 0xe0434352
+```
+
+退出码 `0xe0434352` 为 Windows .NET CLR 未处理异常，说明 UnrealBuildTool（UBT）自身进程崩溃，而非源码编译错误。
+
+### 排查过程
+
+#### 第一步：查看 UBT 日志
+
+日志路径：%localappdata%\UnrealBuildTool\Log.txt
+
+日志在以下位置**戛然而止**，无任何异常信息：
+
+```
+Using EngineIncludeOrderVersion.Unreal5_6 for target gas_aura_llEditor.Target.cs 
+```
+
+#### 第二步：手动执行 UBT 获取完整异常
+
+通过 PowerShell 直接运行 UBT，在控制台捕获完整的 .NET 异常堆栈：
+
+```bash
+dotnet "C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" `
+  gas_aura_llEditor Win64 DebugGame `
+  -Project="D:\GameProject\ue\gas_aura_ll\gas_aura_ll.uproject" `
+  -NoMutex
+```
+
+#### 第三步：分析异常堆栈
+
+控制台输出了完整异常：
+
+```bash
+PS D:\GameProject\ue\gas_aura_ll> dotnet "C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" `
+>>   gas_aura_llEditor Win64 DebugGame `
+>>   -Project="D:\GameProject\ue\gas_aura_ll\gas_aura_ll.uproject" `
+>>   -NoMutex
+Deprecated setting found in "C:\Users\long liu\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml":
+The setting "bAllowUBALocalExecutor" is deprecated. Support for this setting will be removed in a future version of Unreal Engine.
+Log file: C:\Users\long liu\AppData\Local\UnrealBuildTool\Log.txt
+Deprecated setting found in "C:\Users\long liu\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml":
+The setting "bAllowUBALocalExecutor" is deprecated. Support for this setting will be removed in a future version of Unreal Engine.
+Using 'git status' to determine working set for adaptive non-unity build (D:\GameProject\ue\gas_aura_ll).
+Creating makefile for gas_aura_llEditor (no existing makefile)
+Unhandled exception. System.ArgumentException: Path fragment '"img/\346\225\214\344\272\272AI.png"' contains invalid directory separators.
+   at EpicGames.Core.FileSystemReference.CombineStrings(DirectoryReference baseDirectory, String[] fragments) in D:\build\++UE5\Sync\Engine\Source\Programs\Shared\EpicGames.Core\FileSystemReference.cs:line 80
+   at EpicGames.Core.FileReference.Combine(DirectoryReference baseDirectory, String[] fragments) in D:\build\++UE5\Sync\Engine\Source\Programs\Shared\EpicGames.Core\FileReference.cs:line 151
+   at UnrealBuildTool.GitSourceFileWorkingSet.AddPath(String Path) in D:\build\++UE5\Sync\Engine\Source\Programs\UnrealBuildTool\System\SourceFileWorkingSet.cs:line 276
+   at UnrealBuildTool.GitSourceFileWorkingSet.OutputDataReceived(Object Sender, DataReceivedEventArgs Args) in D:\build\++UE5\Sync\Engine\Source\Programs\UnrealBuildTool\System\SourceFileWorkingSet.cs:line 242
+   at System.Diagnostics.AsyncStreamReader.FlushMessageQueue(Boolean rethrowInNewThread)
+--- End of stack trace from previous location ---
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading.PortableThreadPool.WorkerThread.WorkerThreadStart()
+PS D:\GameProject\ue\gas_aura_ll>
+```
+
+异常明确指向：GitSourceFileWorkingSet.AddPath 在解析 git status 输出时，遇到了无法处理的路径格式。
+
+### 根本原因
+1. **Git 工作区中存在包含中文字符的未跟踪文件**（如 `img/敌人AI.png`）。  
+2. UnrealBuildTool 通过 `git status` 检测文件变更时，Git 默认将中文字符转为八进制转义序列（如 `\346\225\214\344\272\272AI.png`）。  
+3. UBT 在解析该路径并写入 UHT 的 JSON manifest 时，`System.Text.Json` 无法正确处理某些转义序列，引发 `IndexOutOfRangeException`。  
+4. 即使删除了中文文件，Git 暂存区或索引中可能仍残留该文件的记录（`new file:` 与 `deleted:` 并存状态），导致 UBT 持续崩溃。
+
+触发链路
+
+```
+修改了中文命名的文件
+        ↓
+git status 将其列入变更文件列表
+        ↓
+git 默认开启 core.quotepath=true
+将非 ASCII 字符转义为八进制序列并加引号
+输出：'"\346\225\214\344\272\272AI.png"'
+        ↓
+UBT 的 GitSourceFileWorkingSet 逐行解析 git status 输出
+        ↓
+路径解析器遇到首尾引号，误判为非法路径分隔符
+        ↓
+抛出 System.ArgumentException → UBT 进程崩溃
+        ↓
+exit code 0xe0434352
+```
+
+### 解决方案
+
+####  清理 Git 状态
+```bash
+# 重置所有本地未提交更改，清除暂存区记录
+git reset --hard HEAD
+# 删除所有未跟踪的文件（包括中文文件）
+git clean -fd
+```
+
+#### 方案一：关闭 git quotepath（推荐，立即生效）
+
+在项目目录执行（仅对当前仓库生效）：
+
+```bash
+git config core.quotepath false
+```
+
+或全局生效：
+
+```bash
+git config --global core.quotepath false
+```
+
+配置后重新编译即可恢复正常，无需修改任何项目文件。
+
+#### 方案二：重命名文件（治本）
+
+将涉及的中文文件名改为英文或拼音
+
+#### 方案三：将文件加入 .gitignore（规避）
+
+若该配置文件属于本地个人配置，不需要被 git 追踪：
+
+文件从 git 追踪中移除后，不再出现在 git status 输出中，UBT 也就不会解析到它。
+
+
+
+### 遇到新的错误
+
+```bash
+ Compile [x64] SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.cpp: Exited with error code -1 . The build will fail.
+```
+
+#### 禁用 UBA 并获取详细编译错误
+
+```bash
+# 在项目目录下执行
+Remove-Item -Recurse -Force Intermediate, Binaries -ErrorAction SilentlyContinue
+
+dotnet "C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" `
+  gas_aura_llEditor Win64 Development `
+  -Project="D:\GameProject\ue\gas_aura_ll\gas_aura_ll.uproject" `
+  -NoUBA
+```
+
+输出 **UBT 内部的 JSON 序列化异常**
+
+```bash
+Unhandled exception: IndexOutOfRangeException: Index was outside the bounds of the array.
+   at System.Text.Json.JsonWriterHelper.EscapeString(ReadOnlySpan`1 value, Span`1 destination, Int32 indexOfFirstByteToEscape, JavaScriptEncoder encoder, Int32& written)
+   at System.Text.Json.Utf8JsonWriter.WriteStringEscapeValue(ReadOnlySpan`1 value, Int32 firstEscapeIndexVal)
+   ...
+```
+
+### 解决方案
+
+尝试编辑 `%AppData%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml`，替换为以下内容：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration xmlns="https://www.unrealengine.com/BuildConfiguration">
+    <BuildConfiguration>
+        <!-- 禁用 UBA（Unreal Build Accelerator） -->
+        <bAllowUBAExecutor>false</bAllowUBAExecutor>
+        <!-- 禁用并行 UHT（避免多线程序列化冲突） -->
+        <bAllowUHTParallelization>false</bAllowUHTParallelization>
+    </BuildConfiguration>
+</Configuration>
+```
+
+保存后重新编译。
+
+### 预防建议
+- 项目路径、源码、资产名称中**避免使用中文、空格或特殊符号**。
+- 使用 Git 时设置 `git config --global core.quotepath false` 可让中文正常显示，但最稳妥的方式是从源头禁用非 ASCII 文件名。
+- 若编译问题与 UBT 内部 JSON 操作相关，优先尝试禁用 `bAllowUHTParallelization`。
+
+### 参考
+- 错误日志路径：`C:\Users\<用户名>\AppData\Local\UnrealBuildTool\Log.txt`
+- 社区讨论：[CSDN 类似问题](https://blog.csdn.net/weixin_42409793/article/details/161228636)
