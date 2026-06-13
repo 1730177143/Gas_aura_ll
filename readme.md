@@ -935,6 +935,14 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 1. 调用蓝图函数，Get Random Location In Navigable Radius。
 
+> 敌人AI逻辑
+
+1. 利用Service寻找最近的玩家，
+2. 如果找到了最近的玩家，并且敌人没有被攻击继续执行下面的Sequence【顺序执行直到失败】
+3. S1 如果敌人是远程，并且符合距离条件，就开始攻击任务（攻击任务时继续靠近）
+4. S2 如果敌人是近战，并且符合距离条件，就开始攻击任务（攻击任务时继续靠近）
+5. S3 如果敌人距离最近玩家的距离小于某个最大值，就追击。如果大于某个距离条件（该距离条件是S1，S2中距离条件的最小值），就自我结束。
+
 ## 环境查询系统EQS
 
 ### 可射击位置
