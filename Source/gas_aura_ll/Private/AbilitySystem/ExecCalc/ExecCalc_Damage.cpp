@@ -64,7 +64,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 	FGameplayEffectContextHandle EffectContextHandle = Spec.GetContext();
-	
+
 	int32 SourcePlayerLevel = 1;
 	if (SourceAvatar->Implements<UCombatInterface>())
 	{
@@ -97,8 +97,12 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	EvaluationParameters.TargetTags = TargetTags;
 
 	// Get Damage Set by Caller Magnitude
-	float Damage = Spec.GetSetByCallerMagnitude(FAuraGameplayTags::Get().Damage);
-
+	float Damage = 0.f;
+	for (FGameplayTag DamageTypeTag : FAuraGameplayTags::Get().DamageTypes)
+	{
+		float DamageTypeValue = Spec.GetSetByCallerMagnitude(DamageTypeTag);
+		Damage += DamageTypeValue;
+	}
 
 	// 捕获目标上的格挡机会，并判断是否成功格挡
 	float TargetBlockChance = 0.f;
@@ -158,18 +162,20 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitResistanceDef,
 	                                                           EvaluationParameters, TargetCriticalHitResistance);
 	TargetCriticalHitResistance = FMath::Max<float>(TargetCriticalHitResistance, 0.f);
-	
-	const FRealCurve* CriticalHitResistanceCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(FName("CriticalHitResistance"), FString());
+
+	const FRealCurve* CriticalHitResistanceCurve = CharacterClassInfo->DamageCalculationCoefficients->FindCurve(
+		FName("CriticalHitResistance"), FString());
 	const float CriticalHitResistanceCoefficient = CriticalHitResistanceCurve->Eval(TargetPlayerLevel);
 
 	// 暴击抗性会降低一定比例的暴击率
-	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance * CriticalHitResistanceCoefficient;
+	const float EffectiveCriticalHitChance = SourceCriticalHitChance - TargetCriticalHitResistance *
+		CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
 
 	UAuraAbilitySystemLibrary::SetIsCriticalHit(EffectContextHandle, bCriticalHit);
 	// 如果暴击，伤害加倍，
 	Damage = bCriticalHit ? 2.f * Damage + SourceCriticalHitDamage : Damage;
-	
+
 	//可以使用多个 AddOutputModifier 修改多个属性
 	const FGameplayModifierEvaluatedData EvaluatedData(UAuraAttributeSet::GetIncomingDamageAttribute(),
 	                                                   EGameplayModOp::Additive, Damage);

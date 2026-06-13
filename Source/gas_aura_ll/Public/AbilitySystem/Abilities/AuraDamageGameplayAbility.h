@@ -15,6 +15,12 @@ class GAS_AURA_LL_API UAuraDamageGameplayAbility : public UAuraGameplayAbility
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Damage")
-	FScalableFloat Damage;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	TMap<FGameplayTag,FScalableFloat> DamageTypes;
+	
 };

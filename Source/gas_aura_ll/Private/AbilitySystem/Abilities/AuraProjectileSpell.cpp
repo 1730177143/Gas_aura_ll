@@ -48,16 +48,22 @@ void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocati
 			Cast<APawn>(GetOwningActorFromActorInfo()),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 
-		//ToDo: 添加伤害 GE
+		//添加伤害 GE
 		UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(
 			GetAvatarActorFromActorInfo());
 		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(),
 		                                                                   SourceASC->MakeEffectContext());
 
-		const float ScaleDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+
 		const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
+		for (auto& Pair : DamageTypes)
+		{
+			const float ScaleDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaleDamage);
+		}
+
 		//SpecHandle 携带 key GameplayTags.Damage,value 50.f
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, ScaleDamage);
+		//UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, ScaleDamage);
 
 
 		Projectile->DamageEffectParams = SpecHandle;

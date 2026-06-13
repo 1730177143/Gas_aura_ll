@@ -32,6 +32,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	int32 NumProjectiles = 5;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
+
 };
