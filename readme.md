@@ -869,7 +869,7 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 ![EnemyAI](D:\GameProject\ue\gas_aura_ll\img\EnemyAI.png)
 
-### Next Steps
+## Next Steps
 
 1.  **Create an AI Controller class**
     创建一个 AI Controller (AI控制器) 类
@@ -934,6 +934,20 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 > 攻击后换个位置
 
 1. 调用蓝图函数，Get Random Location In Navigable Radius。
+
+## 环境查询系统EQS
+
+### 可射击位置
+
+远程攻击的敌人攻击需要找到合适位置，并且和玩家之间没有阻隔物
+
+1. 在角色周围生成很多Item，根据自定义规则查询每条Item的得分，保留得分最高的Item。
+2. Item可以是Actor也可以是Location
+3. 直接创建一个EQS蓝图，然后生成不同的Item。
+4. 对不同的Item进行Trace【add Text Tracre，如果是选择留下成功Trace的，需要取消勾选Bool Mesh】，设置EQS Context蓝图来配置Trace目标。【重写Provice Actor】并查询所有的Character，找到AuraCharacter并返回。
+5. 在此基础上基于测试距离。
+6. 查询返回的是值最大的结果
+7. 这里有一个小BUG，并没有忽略敌方Visibility，需要自定义EQS的 Trace过程中忽略带有EnemyTag的Actor。
 
 # UE 5.6 编译错误记录
 
