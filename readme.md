@@ -926,6 +926,11 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 类似Selector，会从**左到右**顺序执行他的子节点，一旦**失败**就返回，不会再执行其他子节点，
 
+> 行为树任务
+
+1. 蓝图类继承 `BTTask_BlueprintBase`
+2. 必须调用`FinishExecute`返回一个状态，否则会卡在这个任务
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
