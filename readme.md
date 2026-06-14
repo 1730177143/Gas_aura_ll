@@ -968,8 +968,8 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 > 敌人转向能力的实现
 
-1. 使用motionWraping，取消勾选transformation，rotation是face。蓝图实现一个函数，接受一个Target，然后调用motionwraping的函数，执行wraping然后更新。
-2. 在敌人基类中增加一个新的变量，指向TargetActor。然后在EnemyInterface中写两个蓝图原生事件用于获取和设置这个TargetActor。
+1. 使用motionWraping，取消勾选transformation，rotation是face。蓝图实现一个函数，接受一个Target，然后调用motionwraping的函数，执行wraping然后更新。（对应的动画要开启根骨骼运动）
+2. 在敌人基类中增加一个新的变量，指向TargetActor。然后在EnemyInterface中写两个蓝图原生事件用于获取和设置这个TargetActor，接着在AuraEnemy 重写这两个蓝图原生事件。
 3. 在BTT_Attack中链接BlackBoard中的target2Follow变量，然后设置敌人基类的TargetActor。
 4. 在GA中调用敌人基类的Update FacingTarget后再播放攻击蒙太奇。
 
