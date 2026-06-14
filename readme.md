@@ -963,8 +963,15 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 1. 在CharacterClassInfo中增加一个新的能力数组，保存不同职业的GA
 2. 修改蓝图可调用函数库中的赋予初始化能力函数，该函数接受一个枚举表示职业，然后遍历该职业的特定能力GA，并赋予给ASC。
-3. 在编辑器中配置相应的数据。并创建不同职业的GA蓝图。
+3. 在编辑器中配置相应的数据。并创建不同职业的GA蓝图,并为GA添加GameplayTag。
 4. 我们在行为树的Task中获取Pawn的ASC，然后根据GameplayTag找到对应的能力并激活。
+
+> 敌人转向能力的实现
+
+1. 使用motionWraping，取消勾选transformation，rotation是face。蓝图实现一个函数，接受一个Target，然后调用motionwraping的函数，执行wraping然后更新。
+2. 在敌人基类中增加一个新的变量，指向TargetActor。然后在EnemyInterface中写两个蓝图原生事件用于获取和设置这个TargetActor。
+3. 在BTT_Attack中链接BlackBoard中的target2Follow变量，然后设置敌人基类的TargetActor。
+4. 在GA中调用敌人基类的Update FacingTarget后再播放攻击蒙太奇。
 
 # UE 5.6 编译错误记录
 
