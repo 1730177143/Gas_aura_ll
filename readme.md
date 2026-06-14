@@ -973,6 +973,24 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 3. 在BTT_Attack中链接BlackBoard中的target2Follow变量，然后设置敌人基类的TargetActor。
 4. 在GA中调用敌人基类的Update FacingTarget后再播放攻击蒙太奇。
 
+> 动画通知
+
+1. 我们重用Aura Character的发送Tag的动画通知蓝图。
+
+2. 在敌人的AM中，添加一个自定义的通知，该通知携带一个标签，GA播放蒙太奇后就直接waitGameplayEvent（指定等待的标签）。接收到标签后进行后续的伤害判定操作。
+
+> 辅助函数
+
+3. 在IcombatInterfac中声明几个蓝图原生函数(`BlueprintNativeEvent`)（是否死亡，获取actor)，这些函数可以直接传入上下文使用，而不必转换接口。
+
+4. 在蓝图可调用函数库中新增球体查询Actor的功能。参考造成范围衰减伤害的内置函数`ApplyRadialDamageWithFalloff()`
+
+5. 在DamageGameplayAbility中定义一个CauseDamage函数，接受一个Target，对该Target造成伤害。
+
+6. 敌人攻击的时查询范围内的所有Actor，调用CauseDamage函数造成伤害。该GA的GE使用Aure的带有自定义计算的GE。采用caller的方式设置GE的伤害。设置伤害的时候新建一个TableCuve，在敌人GA中配置好不同伤害标签（类型）的具体伤害（伤害表格）。
+
+7. 在显示伤害数值的时候我们将Source转换为自定义的PlayerController。此时如果Source是敌人则转换失败无法显示伤害。可以在后面添加一个将Target转换为自定义PlayerController的语句来单独处理敌人伤害显示。
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
