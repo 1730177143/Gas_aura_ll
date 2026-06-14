@@ -7,6 +7,7 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "gas_aura_ll/gas_aura_ll.h"
+#include "Kismet/GameplayStatics.h"
 // Sets default values
 AAuraCharacterBase::AAuraCharacterBase()
 {
@@ -64,6 +65,8 @@ FTaggedMontage AAuraCharacterBase::GetTaggedMontageByTag_Implementation(const FG
 
 void AAuraCharacterBase::MulticastHandleDeath_Implementation()
 {
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
+
 	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	Weapon->SetSimulatePhysics(true);
 	Weapon->SetEnableGravity(true);
