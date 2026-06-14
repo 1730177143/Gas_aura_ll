@@ -27,7 +27,8 @@ void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocati
 
 	if (GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
 	{
-		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo());
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+			GetAvatarActorFromActorInfo(), FAuraGameplayTags::Get().Montage_Attack_Weapon);
 		//获取指向目标的旋转向量
 		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 		//设置仰角
