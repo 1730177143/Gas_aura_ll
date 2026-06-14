@@ -704,7 +704,24 @@ GA流程：
 - 在`AuraAssetManager`中重写在引擎早期就会被调用的 `StartInitialLoading()`,并调用`InitializeNativeGameplayTags()`
 - 避免需要使用`Gameplay Tags`时为空
 
-# GamplayCues
+# 特效和GamplayCues
+
+## GamplayCues
+
+GamplayCues实现音效、视觉效果
+
+GameplayCue的标签必须以`GameplayCue`为顶级标签，通过tag启用，支持网络同步
+
+> Gameplay Cue 攻击音效和受击特效、死亡音效
+
+1. 不同角色的受击特效放用蓝图配置，战斗接口获取不同角色的受击特效。
+2. 不同武器的攻击声效所不同，在TaggedMontage结构体中配置。
+3. 敌人的 攻击音效一次攻击只播放一次，对于近战可以再遍历所有影响对象后再播放音效。在敌人武器处播放音效。在每个收到伤害的角色身上播放各自对应的受击特效【因为不同角色的血液颜色可能不一样】
+4. 在敌人GA蓝图中生成的特效和音效不会同步到任何客户端，因为敌人的Controller是AIcontroller。因此需要使用GameplayCue来同步这些特效。
+5. GameplayCue的标签必须以`GameplayCue`为顶级标签，支持网络同步
+6. 更新Montage标签，每个Montag对应一个Montag标签和Socket标签，Socket标签用于标记左右手或者武器【技能起始位置】，Montage标签用于标记Montage本身以及对应的音效。
+7. 采用GameplayCue蓝图实现受击特效和攻击音效。
+8. 在BaseChararter中增加死亡音效指针，在角色死亡的时候播放。
 
 
 # MVC架构UI
