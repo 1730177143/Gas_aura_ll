@@ -991,6 +991,12 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 7. 在显示伤害数值的时候我们将Source转换为自定义的PlayerController。此时如果Source是敌人则转换失败无法显示伤害。可以在后面添加一个将Target转换为自定义PlayerController的语句来单独处理敌人伤害显示。
 
+> 解决敌人误伤和避让
+
+1. 蓝图可调用函数中新增一个判断是否是友军的函数，在GA中如果是友军则不应用伤害。
+2. 判断是否是友军可以使用Actor的Tag
+3. 在敌人蓝图中可以搜索avoid，打开即可避让，该功能只在服务端执行，启动后会侧滑。
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
