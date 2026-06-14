@@ -35,6 +35,7 @@ public:
 	virtual void Die() override;
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
 	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
+	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
 	/** end Combat Interface */
 
 	//多播RPC,可靠。在服务器和客户端处理表现
