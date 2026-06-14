@@ -985,7 +985,7 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 4. 在蓝图可调用函数库中新增球体查询Actor的功能。参考造成范围衰减伤害的内置函数`ApplyRadialDamageWithFalloff()`
 
-5. 在DamageGameplayAbility中定义一个CauseDamage函数，接受一个Target，对该Target造成伤害。
+5. 在DamageGameplayAbility中定义一个CauseDamage函数,实现遍历所有伤害类型`DamageTypes`，并为`GameplayEffectSpec`分配一个`SetByCaller`数值，接受一个Target，对该Target造成伤害。
 
 6. 敌人攻击的时查询范围内的所有Actor，调用CauseDamage函数造成伤害。该GA的GE使用Aure的带有自定义计算的GE。采用caller的方式设置GE的伤害。设置伤害的时候新建一个TableCuve，在敌人GA中配置好不同伤害标签（类型）的具体伤害（伤害表格）。
 
