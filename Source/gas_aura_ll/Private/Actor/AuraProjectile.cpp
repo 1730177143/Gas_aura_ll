@@ -106,6 +106,6 @@ bool AAuraProjectile::IsValidOverlap(AActor* OtherActor)
 	}
 
 	//避免友伤
-	if (!UAuraAbilitySystemLibrary::IsNotFriend(Causer, OtherActor)){ return false;}
+	if (!UAuraAbilitySystemLibrary::IsNotFriend(Causer, OtherActor)) { return false; }
 	return true;
 }

@@ -1021,6 +1021,24 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 2. 判断是否是友军可以使用Actor的Tag
 3. 在敌人蓝图中可以搜索avoid，打开即可避让，该功能只在服务端执行，启动后会侧滑。
 
+## 远程敌人
+
+> Rock Projectile
+
+1. 类似于主角的ProjectileSpell技能，为敌方角色创建一个GA蓝图【[GA_Rock](https://zhida.zhihu.com/search?content_id=269460552&content_type=Article&match_order=1&q=GA_Rock&zhida_source=entity)】，蓝图的父类为ProjectileSpell。
+2. 定义一个投射物Actor。设置Static Mesh，设置最大速度和初始速度，设置启用重力。
+3. 对这个Rock Projectile创建伤害曲线，并在GA_Rock中配置伤害类型和伤害数值（Scalable Float）
+4. 为GA_Rock增加一个Tag，Abilities.Attack，在Data Class Info资产中配置敌方的初始GA。
+5. \#####开始设置视觉效果#####
+6. 创建攻击蒙太奇，配置[MotionWraping](https://zhida.zhihu.com/search?content_id=269460552&content_type=Article&match_order=1&q=MotionWraping&zhida_source=entity)，添加动画通知，发送特定标签A。在敌人角色蓝图中，配置特定标签A对应的蒙太奇，方便后续GA查，配置武器插槽方便生成Rock Actor。
+7. 给弹弓做一个动画，让弹弓的皮带跟着敌人的手。首先在动画蓝图中每一帧获取角色的手部sockettransform，然后再动画中每一帧根据位置更新对应的骨骼。
+8. 攻击的时候则不适用弹弓的动画，直接使用攻击的动画。为了实现这一点需要在武器ABP蓝图中增加一个变量，并设置如果变量是true，则使用步骤7，否则使用武器的默认动画，不做任何操作。
+9. 在敌人攻击蒙太奇中增加两个通知分别为开始射击和结束射击，在敌人ABP蓝图中相应这两个通知，开始射击时候，获取武器的ABP，，并设置变量为False。并播放武器的射击AM。结束射击时获取武器的ABP，并设置变量为true。为了避免每帧转换对象，可以在动画初始阶段转换对象，注意动画初始事件需要先调用父类的动画初始事件。
+10. \#####开始设置GE效果#####
+11. GA_Rock中的蓝图链接同近战敌方GA中的类似。
+12. 在RockActor的重叠事件中判断是否是友军，如果是直接返回。
+13. 设置角色Mesh短时间内只能响应一次Projectile的重叠事件避免多次重复伤害
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
