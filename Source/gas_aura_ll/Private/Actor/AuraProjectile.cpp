@@ -10,6 +10,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "gas_aura_ll/gas_aura_ll.h"
 // Sets default values
 AAuraProjectile::AAuraProjectile()
@@ -101,7 +102,10 @@ bool AAuraProjectile::IsValidOverlap(AActor* OtherActor)
 	// 避免自伤：若 OtherActor 是 Causer，或者没有 Causer 时无效
 	if (Causer == nullptr || Causer == OtherActor)
 	{
-		return false; 
+		return false;
 	}
+
+	//避免友伤
+	if (!UAuraAbilitySystemLibrary::IsNotFriend(Causer, OtherActor)){ return false;}
 	return true;
 }
