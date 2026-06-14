@@ -855,7 +855,9 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 ```
 
-# 敌人血条
+# 敌人
+
+## 敌人血条
 
 在`AuraEnemy`添加`UWidgetComponent`
 
@@ -863,13 +865,13 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 将敌人自身作为`WidgetController`监听生命值发委托
 
-# 敌人AI
+## 敌人AI
 
 普通敌人采用一个AI行为树，根据不同职业类型执行不同分支
 
 ![EnemyAI](D:\GameProject\ue\gas_aura_ll\img\EnemyAI.png)
 
-## Next Steps
+### Next Steps
 
 1.  **Create an AI Controller class**
     创建一个 AI Controller (AI控制器) 类
@@ -943,9 +945,9 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 4. S2 如果敌人是近战，并且符合距离条件，就开始攻击任务（攻击任务时继续靠近）
 5. S3 如果敌人距离最近玩家的距离小于某个最大值，就追击。如果大于某个距离条件（该距离条件是S1，S2中距离条件的最小值），就自我结束。
 
-## 环境查询系统EQS
+### 环境查询系统EQS
 
-### 可射击位置
+#### 可射击位置
 
 远程攻击的敌人攻击需要找到合适位置，并且和玩家之间没有阻隔物
 
@@ -956,6 +958,13 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 5. 在此基础上基于测试距离。
 6. 查询返回的是值最大的结果
 7. 这里有一个小BUG，并没有忽略敌方Visibility，需要自定义EQS的 Trace过程中忽略带有EnemyTag的Actor。
+
+## 敌人近战GA
+
+1. 在CharacterClassInfo中增加一个新的能力数组，保存不同职业的GA
+2. 修改蓝图可调用函数库中的赋予初始化能力函数，该函数接受一个枚举表示职业，然后遍历该职业的特定能力GA，并赋予给ASC。
+3. 在编辑器中配置相应的数据。并创建不同职业的GA蓝图。
+4. 我们在行为树的Task中获取Pawn的ASC，然后根据GameplayTag找到对应的能力并激活。
 
 # UE 5.6 编译错误记录
 
