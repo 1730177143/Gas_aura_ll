@@ -108,7 +108,17 @@ r.Streaming.PoolSize=1000
 
 + 等级 Level : 没必要放入Attribute，非浮点，不需要和GAS其他强互动，但是部分属性依赖此进行计算
 
+### 遮挡相机的Actor进行透点蒙版透明化
 
+设置下列值，连接Mask即可
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1726424519159-967285b6-936c-4eb8-9c82-8379ef0dcc4f.png)
+
+直接而简单的添加碰撞盒，如果存在重叠，则通知对象调整材质节点的值进行透点化
+
+![遮挡碰撞盒](https://cdn.nlark.com/yuque/0/2024/png/36214189/1726424577164-900beb91-daf9-4a7b-af19-c0d331b2eba1.png)
+
+### 
 
 ## 角色类型与配置Character Classes
 
