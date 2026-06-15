@@ -1047,7 +1047,7 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 2. 召唤的近战角色世界复用已有的近战角色的GA即可。近战攻击都是通用的。
 3. 在projectile能力中，修改Spawn函数，接受一个标签，根据标签获取正确的能力（例如火球）生成位置
 4. 创建一个SummonAbility c++类，该GA没有伤害，在该GA类中实现在前方指定扇形区域生成指定数量的Location的函数。并执行直线追踪得到最接近地面的位置以便在斜坡上使用。
-5. 在GA里面实现生成小兵的算法：首先获得生成位置，然后在这些位置生成特效，生成特效后一个一个的生成小兵。
+5. 在GA里面实现**异步**生成小兵的算法：首先获得生成位置，然后在这些位置生成特效，生成特效后一个一个的生成小兵。
 6. 生成小兵后需要手动设置控制器。
 7. 修改被生成Actor的朝向和生成Actor保持一致。
 8. 限制生成Actor的数量，在BaseCharacter中配置MinionCount，用接口获取这个值。
