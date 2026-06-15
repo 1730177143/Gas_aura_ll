@@ -21,6 +21,20 @@ UAbilitySystemGlobals::Get().InitGlobalData();
 }
 ```
 
+## 渲染与效果
+
+卡通画风，项目素材却是4096级别，可以统一限制在512级别，
+
+修改纹理流送池
+
+```ini
+[/Script/Engine.RenderSettings]
+r.TextureStreaming=True
+r.Streaming.PoolSize=1000
+```
+
+## 
+
 # Actor
 
 ## AAuraEffectActor
