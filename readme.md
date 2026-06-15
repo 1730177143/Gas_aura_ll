@@ -1039,6 +1039,23 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 12. 在RockActor的重叠事件中判断是否是友军，如果是直接返回。
 13. 设置角色Mesh短时间内只能响应一次Projectile的重叠事件避免多次重复伤害
 
+## 召唤
+
+> 萨满召唤技能
+
+1. 首先为召唤物(Demon)创建角色蓝图，并配置召唤物的属性：从父类蓝图和动画蓝图中创建子类，设置Mesh调整胶囊体、设置ABP蓝图中的走跑混合空间，配置武器（如有），配置socket名称，配置攻击蒙太奇和对应的标签，配置Socket Name（攻击方式，武器左右手和尾巴）。
+2. 召唤的近战角色世界复用已有的近战角色的GA即可。近战攻击都是通用的。
+3. 在projectile能力中，修改Spawn函数，接受一个标签，根据标签获取正确的能力（例如火球）生成位置
+4. 创建一个SummonAbility c++类，该GA没有伤害，在该GA类中实现在前方指定扇形区域生成指定数量的Location的函数。并执行直线追踪得到最接近地面的位置以便在斜坡上使用。
+5. 在GA里面实现生成小兵的算法：首先获得生成位置，然后在这些位置生成特效，生成特效后一个一个的生成小兵。
+6. 生成小兵后需要手动设置控制器。
+7. 修改被生成Actor的朝向和生成Actor保持一致。
+8. 限制生成Actor的数量，在BaseCharacter中配置MinionCount，用接口获取这个值。
+9. 创建一个新的BT，修改BTT_Attack，如果当前MinionCount小于临界值就激活生成Summon的能力，否则激活普通攻击的能力。
+10. 在combatInterface中新增一个修改MinionCount的函数。在GA中Spawn一个随从就会对MinionCount+1
+11. 生成Spawn的时候立刻绑定一个销毁事件，销毁的时候MinIonCount-1;
+12. 增加点生成效果，可以在生成角色的BeginPlay中设置一个大小缩放的效果，用Timeline来辅助实现获取不同的3D缩放比例
+
 # UE 5.6 编译错误记录
 
 ## Git 中文文件名
