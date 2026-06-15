@@ -118,7 +118,13 @@ r.Streaming.PoolSize=1000
 
 ![遮挡碰撞盒](https://cdn.nlark.com/yuque/0/2024/png/36214189/1726424577164-900beb91-daf9-4a7b-af19-c0d331b2eba1.png)
 
-### 
+> Fade In and Fade Out
+
+1. 创建一个Fade Actor基类，在Construct中保存原始Material数组，遍历Fade数组创建动态材质数组。
+2. 自定义两个蓝图事件，在Fade Out中，先遍历动态材质数组，设置 Mesh中的材质为动态材质实例，并根据Timeline设置动态材质的参数。在Fade in中共类似。在TimeLine完成后如果是Fade In则需要恢复Mesh的原始材质。
+3. 选择合适的时机调用Fade Out或者Fade In。在角色在Actor后面的时候Fade Out
+4. 创建一个蓝图接口，FadeActor实现这个接口，重写FadeOut和FadeIn函数。在角色蓝图中。
+5. 在角色相机下面增加一个Box，为该Box设置重叠事件，开始重叠的时候Fade Out，结束重叠的时候
 
 ## 角色类型与配置Character Classes
 
