@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
@@ -84,4 +85,16 @@ void UOverlayWidgetController::BindCallBackToDependencies()
 void UOverlayWidgetController::OnInitialStartupAbilitiesGiven(UAuraAbilitySystemComponent* AuraAbilitySystemComponent)
 {
 	if (AuraAbilitySystemComponent->bStartupAbilitiesGiven) return;
+
+	FForEachAbility BroadcastDelegate;
+	BroadcastDelegate.BindLambda([this,AuraAbilitySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
+	{
+		//根据能力的Tag（GetAbilityTagFromSpec获取）查找DA获取能力相关的UI信息
+		FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(
+			AuraAbilitySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
+		Info.InputTag = AuraAbilitySystemComponent->GetInputTagFromSpec(AbilitySpec);
+
+		AbilityInfoDelegate.Broadcast(Info);
+	});
+	AuraAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
 }

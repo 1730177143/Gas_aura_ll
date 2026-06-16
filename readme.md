@@ -911,13 +911,24 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 
 ## UI界面
 
+### 主界面技能栏接受技能相关的UI信息
+
+创建一个资产管理(<font style="background-color:#EFF0F0;">FAuraAbilityInfo</font>)，在里面配表，填入技能需要的相关信息
+
+GAS执行添加技能，使控制器变更技能信息
+
++ 为角色添加能力时(<font style="background-color:#FBF5CB;">AddCharacterAbilities</font>)，<font style="background-color:#EFF0F0;">UAuraAbilitySystemComponent</font> 的 <font style="background-color:#CEF5F7;">AbilitiesGiveDel </font>代理进行广播，告知 <font style="background-color:#EFF0F0;">UOverlayWidgetController</font> 执行初始化技能信息(<font style="background-color:#FBF5CB;">BroadcastAbilityInfo</font>)
++ <font style="background-color:#EFF0F0;">UOverlayWidgetController</font> 添加代理(<font style="background-color:#EFF0F0;">FForEachAbility</font>)绑定函数(根据技能Tag,获取技能相关UI信息)
++ <font style="background-color:#EFF0F0;">UAuraAbilitySystemComponent</font> 执行函数(<font style="background-color:#FBF5CB;">ForEachAbility</font>)，循环获取有效的能力，执行代理(<font style="background-color:#EFF0F0;">FForEachAbility</font>)进行广播能力。代理在(<font style="background-color:#EFF0F0;">UOverlayWidgetController</font>::<font style="background-color:#FBF5CB;">BroadcastAbilityInfo</font>)中设置为了广播的Lambda表达式，<font style="background-color:#FBF5CB;">ForEachAbility</font> 相当根据能力的Tag（GetAbilityTagFromSpec获取）查找DA获取能力相关的UI信息，并且进行广播
++ UI界面中的技能球存在输入Tag，当技能信息广播时，判断相关技能是否为对应的输入Tag，如果是，则接受其信息，应用在界面上
+
 > UI界面显示信息信息同步
 
 1. 创建一个数据资产保存用于同步的GA图标。创建一个结构体，包含GA TAg，输入Tag，GA图标和GA背景。数据资产中包含该结构体的数组，创建一个根据GA Tag寻找结构体的函数。
 2. 在OverlayController存储指向这个数据资产的指针，在编辑器中创建这个数据资产。
 3. 创建GA Tag和Input Tag。
 4. Control和ASC的数据交互时机：当ASC赋予完毕初始能力时候，先修改ASC中的bStartupAbilitiesGiven为true再广播。再controller中，如果ASC的bStartupAbilitiesGiven为true，则不需要绑定，直接调用函数即可，如果为false，则绑定委托再赋予初始能力后自动调用。
-5. 我们不想再controller过多访问ASC中的内容，因此我们再ASC中遍历所有的可激活能力，然后广播相关信息。为了实现这一点，我们在ASC中声明一个委托A，然后再Controller定义这个委托并且绑定这个委托A，接着调用ASC中的遍历所有可激活能力的函数B，传递Controller中定义的并绑定的委托A。函数B会遍历所有的可激活能力并且广播委托A。
+5. 我们不想再controller过多访问ASC中的内容，因此我们在ASC中遍历所有的可激活能力，然后广播相关信息。为了实现这一点，我们在ASC中声明一个委托A，然后再Controller定义这个委托并且绑定这个委托A，接着调用ASC中的遍历所有可激活能力的函数B，传递Controller中定义的并绑定的委托A。函数B会遍历所有的可激活能力并且广播委托A。
 6. 编辑器中的UI绑定Controller中的委托，并更新自己的数据。
 7. 注意ASC中的委托需要保证再服务端和客户端均被执行。在服务端，可以在基于初始能力后广播委托。在客户端，可以在ASC的ActivatableAbilities绑定的复制回调函数中广播委托。ActivatableAbilities是一个GASpec的从其，在给予能力时，ActivatableAbilities会发生变化，因此会被同步到客户端，相应的回调函数会被激活。
 
