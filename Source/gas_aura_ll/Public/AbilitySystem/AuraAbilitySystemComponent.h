@@ -39,6 +39,10 @@ public:
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 
 protected:
+	
+	//确保客户端 AbilitiesGivenDelegate 也能被绑定
+	virtual void OnRep_ActivateAbilities() override;
+
 	//改为 client RPC
 	UFUNCTION(Client, Reliable)
 	void ClientEffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec,

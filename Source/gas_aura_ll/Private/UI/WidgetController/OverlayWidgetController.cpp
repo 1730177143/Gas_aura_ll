@@ -84,7 +84,7 @@ void UOverlayWidgetController::BindCallBackToDependencies()
 
 void UOverlayWidgetController::OnInitialStartupAbilitiesGiven(UAuraAbilitySystemComponent* AuraAbilitySystemComponent)
 {
-	if (AuraAbilitySystemComponent->bStartupAbilitiesGiven) return;
+	if (!AuraAbilitySystemComponent->bStartupAbilitiesGiven) return;
 
 	FForEachAbility BroadcastDelegate;
 	BroadcastDelegate.BindLambda([this,AuraAbilitySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
