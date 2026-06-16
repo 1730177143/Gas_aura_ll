@@ -1109,6 +1109,21 @@ GAS执行添加技能，使控制器变更技能信息
 11. 生成Spawn的时候立刻绑定一个销毁事件，销毁的时候MinIonCount-1;
 12. 增加点生成效果，可以在生成角色的BeginPlay中设置一个大小缩放的效果，用Timeline来辅助实现获取不同的3D缩放比例
 
+# Gameplay
+
+### 技能消耗
+
+> 技能消耗
+
+1. GA中可以设置Costs GE和CoolDown GE。
+2. 在GA激活后立即Commit Ability(根据Ability Level)。如果资源不足以Cost则会阻塞技能
+
+> Cooldown
+
+1. 创建一个标签，Cooldown开头。
+2. 创建一个持续事件的GE赋予Target一个Cooldown开头的标签。
+3. 在GA中配置cooldown的GE
+
 # 调试
 
 ### 自定义日志
