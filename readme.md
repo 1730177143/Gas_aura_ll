@@ -909,6 +909,18 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 ```
 
+## UI界面
+
+> UI界面显示信息信息同步
+
+1. 创建一个数据资产保存用于同步的GA图标。创建一个结构体，包含GA TAg，输入Tag，GA图标和GA背景。数据资产中包含该结构体的数组，创建一个根据GA Tag寻找结构体的函数。
+2. 在OverlayController存储指向这个数据资产的指针，在编辑器中创建这个数据资产。
+3. 创建GA Tag和Input Tag。
+4. Control和ASC的数据交互时机：当ASC赋予完毕初始能力时候，先修改ASC中的bStartupAbilitiesGiven为true再广播。再controller中，如果ASC的bStartupAbilitiesGiven为true，则不需要绑定，直接调用函数即可，如果为false，则绑定委托再赋予初始能力后自动调用。
+5. 我们不想再controller过多访问ASC中的内容，因此我们再ASC中遍历所有的可激活能力，然后广播相关信息。为了实现这一点，我们在ASC中声明一个委托A，然后再Controller定义这个委托并且绑定这个委托A，接着调用ASC中的遍历所有可激活能力的函数B，传递Controller中定义的并绑定的委托A。函数B会遍历所有的可激活能力并且广播委托A。
+6. 编辑器中的UI绑定Controller中的委托，并更新自己的数据。
+7. 注意ASC中的委托需要保证再服务端和客户端均被执行。在服务端，可以在基于初始能力后广播委托。在客户端，可以在ASC的ActivatableAbilities绑定的复制回调函数中广播委托。ActivatableAbilities是一个GASpec的从其，在给予能力时，ActivatableAbilities会发生变化，因此会被同步到客户端，相应的回调函数会被激活。
+
 # 敌人
 
 ## 敌人血条
@@ -1085,6 +1097,26 @@ using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateU
 10. 在combatInterface中新增一个修改MinionCount的函数。在GA中Spawn一个随从就会对MinionCount+1
 11. 生成Spawn的时候立刻绑定一个销毁事件，销毁的时候MinIonCount-1;
 12. 增加点生成效果，可以在生成角色的BeginPlay中设置一个大小缩放的效果，用Timeline来辅助实现获取不同的3D缩放比例
+
+# 调试
+
+### 自定义日志
+
+在项目根目录创建两个文件
+
+```cpp
+.h
+#pragma once
+#include "CoreMinimal.h"
+#include "Logging/LogMacros.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogAura, Log, All);
+
+.cpp
+#include "AuraLogChannels.h"
+
+DEFINE_LOG_CATEGORY(LogAura)
+```
 
 # UE 5.6 编译错误记录
 
