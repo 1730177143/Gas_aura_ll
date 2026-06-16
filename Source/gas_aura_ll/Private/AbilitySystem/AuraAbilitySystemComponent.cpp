@@ -31,6 +31,8 @@ void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 			GiveAbility(AbilitySpec);
 		}
 	}
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast(this);
 }
 
 void UAuraAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
@@ -39,7 +41,7 @@ void UAuraAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Inp
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
-			// if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		// if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
 		{
 			//AbilitySpecInputPressed 通知能力，能力对应的按键被按下
 			AbilitySpecInputPressed(AbilitySpec);

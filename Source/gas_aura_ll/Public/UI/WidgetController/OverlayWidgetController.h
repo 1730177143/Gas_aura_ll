@@ -9,6 +9,7 @@
 #include "OverlayWidgetController.generated.h"
 
 
+class UAuraAbilitySystemComponent;
 struct FOnAttributeChangeData;
 // 声明动态多播委托，用于广播属性的变化
 
@@ -69,9 +70,11 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UAbilityInfo> AbilityInfo;
+
+	void OnInitialStartupAbilitiesGiven(UAuraAbilitySystemComponent* AuraAbilitySystemComponent);
 
 	template <typename T>
 	T* GetDataTableRowByTags(UDataTable* DataTable, const FGameplayTag& Tag);

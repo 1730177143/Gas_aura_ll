@@ -49,20 +49,39 @@ void UOverlayWidgetController::BindCallBackToDependencies()
 			OnMaxManaChanged.Broadcast(Data.NewValue);
 		}
 	);
-	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
-		[this](const FGameplayTagContainer& TagContainer)
+	if (UAuraAbilitySystemComponent* AuraAsc = Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		if (AuraAsc->bStartupAbilitiesGiven)
 		{
-			for (const FGameplayTag& Tag : TagContainer)
+			//直接调用
+			OnInitialStartupAbilitiesGiven(AuraAsc);
+		}
+		else
+		{
+			//绑定委托再赋予初始能力后自动调用
+			AuraAsc->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::OnInitialStartupAbilitiesGiven);
+		}
+
+		AuraAsc->EffectAssetTags.AddLambda(
+			[this](const FGameplayTagContainer& TagContainer)
 			{
-				//"A.1".MatchesTag("A") will return True, "A".MatchesTag("A.1") will return False 
-				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
-				if (Tag.MatchesTag(MessageTag))
+				for (const FGameplayTag& Tag : TagContainer)
 				{
-					//捕获this来访问成员函数
-					const FUIWidgetRow* Row = GetDataTableRowByTags<FUIWidgetRow>(MessageWidgetDataTable, Tag);
-					MessageWidgetRowDelegate.Broadcast(*Row);
+					//"A.1".MatchesTag("A") will return True, "A".MatchesTag("A.1") will return False 
+					FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+					if (Tag.MatchesTag(MessageTag))
+					{
+						//捕获this来访问成员函数
+						const FUIWidgetRow* Row = GetDataTableRowByTags<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+						MessageWidgetRowDelegate.Broadcast(*Row);
+					}
 				}
 			}
-		}
-	);
+		);
+	}
+}
+
+void UOverlayWidgetController::OnInitialStartupAbilitiesGiven(UAuraAbilitySystemComponent* AuraAbilitySystemComponent)
+{
+	if (AuraAbilitySystemComponent->bStartupAbilitiesGiven) return;
 }
