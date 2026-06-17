@@ -83,12 +83,12 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	int32 SourcePlayerLevel = 1;
 	if (SourceAvatar->Implements<UCombatInterface>())
 	{
-		SourcePlayerLevel = Cast<ICombatInterface>(SourceAvatar)->GetPlayerLevel();
+		SourcePlayerLevel = ICombatInterface::Execute_GetPlayerLevel(SourceAvatar);
 	}
 	int32 TargetPlayerLevel = 1;
 	if (TargetAvatar->Implements<UCombatInterface>())
 	{
-		TargetPlayerLevel = Cast<ICombatInterface>(TargetAvatar)->GetPlayerLevel();
+		TargetPlayerLevel = ICombatInterface::Execute_GetPlayerLevel(TargetAvatar);
 	}
 
 	//将标签和属性捕获定义映射
@@ -116,7 +116,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	EvaluationParameters.SourceTags = SourceTags;
 	EvaluationParameters.TargetTags = TargetTags;
 
-	
+
 	float Damage = 0.f;
 	for (const TPair<FGameplayTag, FGameplayTag>& Pair : FAuraGameplayTags::Get().DamageTypesToResistances)
 	{
@@ -126,22 +126,22 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 		checkf(TagsToCaptureDefs.Contains(ResistanceTag), TEXT("在 ExecCalc_Damage 中的 TagsToCaptureDefs 不包含 Tag: [%s]"),
 		       *ResistanceTag.ToString());
 		const FGameplayEffectAttributeCaptureDefinition CaptureDef = TagsToCaptureDefs[ResistanceTag];
-		
+
 		// 根据 tag Get Damage Set by Caller Magnitude
-		float DamageTypeValue = Spec.GetSetByCallerMagnitude(DamageTypeTag,false);
-		
+		float DamageTypeValue = Spec.GetSetByCallerMagnitude(DamageTypeTag, false);
+
 		if (DamageTypeValue <= 0.f)
 		{
 			continue;
 		}
-		
+
 		//抗性捕获和计算
 		float Resistance = 0.f;
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluationParameters, Resistance);
 		Resistance = FMath::Clamp(Resistance, 0.f, 100.f);
 
-		DamageTypeValue *= ( 100.f - Resistance ) / 100.f;
-		
+		DamageTypeValue *= (100.f - Resistance) / 100.f;
+
 		Damage += DamageTypeValue;
 	}
 
