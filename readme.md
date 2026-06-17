@@ -1178,6 +1178,17 @@ Next Steps (后续步骤)
 2.  在PlayerState中增加XP和设置XP的函数，在设置XP的函数中广播XP变化，在XP属性的OnRep函数中广播XP变化（客户端广播）。并保存数据资产的指针。委托广播当前的累积XP
 3.  在OverlayController中绑定PS中的委托。并发出XP变化的委托，委托发出一个Percent用于UI设置。
 
+> 创建一个接受Gameplay Event的GA用于接受经验
+
+1. 创建一个经验CT。在CharacterClassInfo中保存不同敌人的击杀经验。
+2. 在蓝图可调用函数空中新增一个根据类别和等级获取击杀经验的Helper Func。
+3. 在Combat接口类中创建一个获取类别的接口，在BaseCharacter中实现这个接口。
+4. 创建一个XP MetaAttribute 用于接受经验。
+5. 创建一个接受经验的GA，等待Gameplay Event（标签为Attribute）接受经验的能力只在服务端运行，不需要复制,Per Actor。
+6. 创建一个修改IncomingXP的GE，GE的modify由Caller设置，数据的标签为Attribute.Meta.Incoming
+7. 在GA中保存该GE的类型引用，以便在GA中等待Gameplay Event后创建这个GE实例并应用到自身。
+8. 在BaseCharacter中增加一个初始 被动能力数组，在ASC中赋予这个能力并启动一次。
+
 # 调试
 
 ### 自定义日志

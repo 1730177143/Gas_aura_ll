@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "UObject/Interface.h"
 #include "CombatInterface.generated.h"
 
@@ -62,19 +63,22 @@ public:
 	AActor* GetAvatar();
 
 	virtual void Die() = 0;
-	
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	TArray<FTaggedMontage> GetAttackMontages();
-	
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UNiagaraSystem* GetBloodEffect();
-	
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FTaggedMontage GetTaggedMontageByTag(const FGameplayTag& MontageTag);
-	
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int32 GetMinionCount();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void IncrementMinionCount(int32 Amount);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	ECharacterClass GetCharacterClass();
 };

@@ -24,6 +24,8 @@ AAuraCharacter::AAuraCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+	
+	CharacterClass = ECharacterClass::Elementalist;
 }
 
 int32 AAuraCharacter::GetPlayerLevel()

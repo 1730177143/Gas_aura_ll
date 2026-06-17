@@ -29,6 +29,7 @@ struct FCharacterClassDefaultInfo
 	UPROPERTY(EditDefaultsOnly, Category = "Class Defaults")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
+	//击杀敌人的奖励
 	UPROPERTY(EditDefaultsOnly, Category = "Class Defaults")
 	FScalableFloat XPReward = FScalableFloat();
 };
