@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "AuraPlayerState.generated.h"
 
+class ULevelUpInfo;
 class UAttributeSet;
 class UAbilitySystemComponent;
 

@@ -14,7 +14,8 @@ struct FOnAttributeChangeData;
 // 声明动态多播委托，用于广播属性的变化
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FAuraAbilityInfo&, Info);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLevelChangedSignature, int32, NewLevel, bool, bLevelUp);
 
 USTRUCT()
 struct FUIWidgetRow : public FTableRowBase
@@ -67,21 +68,21 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
 	FMessageWidgetRowSignature MessageWidgetRowDelegate;
-	
-	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
-	FAbilityInfoSignature AbilityInfoDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category="GAS|XP")
+	FOnAttributeChangedSignature OnXPPercentChangedDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category="GAS|Level")
+	FOnLevelChangedSignature OnPlayerLevelChangedDelegate;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
-	TObjectPtr<UAbilityInfo> AbilityInfo;
-
-	void OnInitialStartupAbilitiesGiven(UAuraAbilitySystemComponent* AuraAbilitySystemComponent);
-
+	
 	template <typename T>
 	T* GetDataTableRowByTags(UDataTable* DataTable, const FGameplayTag& Tag);
+
+	void OnXPChanged(int32 NewXP);
 };
 
 template <typename T>
