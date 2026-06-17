@@ -1124,6 +1124,16 @@ GAS执行添加技能，使控制器变更技能信息
 2. 创建一个持续事件的GE赋予Target一个Cooldown开头的标签。
 3. 在GA中配置cooldown的GE
 
+#### 冷却
+
+继承 <font style="background-color:#EFF0F0;">UBlueprintAsyncActionBase</font> 实现蓝图的异步节点，通过 <font style="background-color:#EFF0F0;">UWaitCooldownChange</font> 异步任务让**UI执行**冷却相关逻辑
+
+<font style="background-color:#EFF0F0;">UWaitCooldownChange</font> 类中的代理变量则是执行引脚，该类就 <font style="background-color:#CEF5F7;">CooldownStartDel</font>(进入冷却) 和 <font style="background-color:#CEF5F7;">CooldownEndDel</font>(完成冷却) 两个分支
+
+**是否完成冷却：**通过目标GAS的目标Tag(冷却类Tag)数量是否为0来判断
+
+**是否进入冷却：**通过目标GAS应用的GE是否带有冷却Tag来判断
+
 # 调试
 
 ### 自定义日志
