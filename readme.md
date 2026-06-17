@@ -1134,6 +1134,50 @@ GAS执行添加技能，使控制器变更技能信息
 
 **是否进入冷却：**通过目标GAS应用的GE是否带有冷却Tag来判断
 
+### 经验
+
+项目中，升级需要考虑升到下一级所需经验，升级给的点数，因此用一个DateAsset进行管理——<font style="background-color:#E7E9E8;">ULevelUpInfo</font> 
+
+经验和等级的变化会设置 <font style="background-color:#E7E9E8;">AAuraPlayerState</font> 中的值,并且由其进行广播通知各类需要改变的内容
+
+
+
+**如何为目标GAS添加XP的：**
+
++ 将添加经验视为一种被动的能力，不结束,直接等待相应的事件触发
++ 一开始便启用这种监听事件的GA(角色初始的被动能力)，GA等待事件Tag之后回调触发
++ 击杀对应的敌人后（<font style="background-color:#EFF0F0;">UAuraAttributeSet</font>::<font style="background-color:#FBF5CB;">PostGameplayEffectExecute</font> 中判断血量和伤害处），发出相应的事件Tag(<font style="background-color:#E7E9E8;">UAuraAttributeSet</font>::<font style="background-color:#FBF5CB;">SendXPEvent</font>)
++ GE应用后会修改XP这个属性(该属性是Meta类，类似Damage)，在Attribute的 <font style="background-color:#FBF5CB;">PostGameplayEffectExecute</font> 中捕捉XP的变化，并且设置给<font style="background-color:#EFF0F0;">PlayerState</font>的XP
+
+**如何将属性点升级的:**
+
++ 角色开始便启用了被动监听GA(<font style="background-color:#E7E9E8;">GA_ListenForEvent</font>),该GA会等待<font style="background-color:#FBF5CB;">TagEvent</font>的信息进行执行
++ GA收到信息执行时，根据Tag注册对应的<font style="background-color:#E7E9E8;">Magnitude</font>，并且应用GE
++ GE内有各种<font style="background-color:#E7E9E8;">SetByCall</font>的<font style="background-color:#E7E9E8;">Magnitude</font>，根据标签能够设置其值，并且加上属性值
+
+> XP总览
+
+---
+
+Next Steps (后续步骤)
+
+1.  **Level Up Info Data Asset**
+2.  **向 Player State 添加 XP (包含 Rep Notify )**
+3.  
+    **用于在 XP 变化时进行广播的 Delegate** 
+4.  **Widget Controller 对 Delegate广播的响应**
+5.  **XP 奖励 - 每个敌人根据其等级和职业给予的 XP 数量**
+6.  **在击杀敌人时实时授予 XP**
+7.  **处理 Level Up (升级) (处理潜在的连续多次升级)**
+    **a. 奖励 Attribute Points (属性点)**
+    **b. 奖励 Spell Points (法术点/技能点)**
+
+---
+
+1.  创建数据资产Level Up Info，添加根据经验选择等级的函数。在编辑器中配置数据资产。数据资产中保存的是升级到下一等级所需的累积经验。
+2.  在PlayerState中增加XP和设置XP的函数，在设置XP的函数中广播XP变化，在XP属性的OnRep函数中广播XP变化（客户端广播）。并保存数据资产的指针。委托广播当前的累积XP
+3.  在OverlayController中绑定PS中的委托。并发出XP变化的委托，委托发出一个Percent用于UI设置。
+
 # 调试
 
 ### 自定义日志
