@@ -16,6 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCooldownChangeSignature, float, Tim
 /**
  * 异步任务节点，用于等待冷却标签的开始或结束
  * 在蓝图中作为异步节点使用，可以通过“CooldownStart”和“CooldownEnd”引脚驱动逻辑
+ * meta = (ExposedAsyncProxy = "AsyncTask") 暴露任务本身 ，方便在新任务前结束旧任务 ，避免内存问题
  */
 UCLASS(BlueprintType, meta = (ExposedAsyncProxy = "AsyncTask"))
 class GAS_AURA_LL_API UWaitCooldownChange : public UBlueprintAsyncActionBase
