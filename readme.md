@@ -1181,8 +1181,8 @@ Next Steps (后续步骤)
 > 创建一个接受Gameplay Event的GA用于接受经验
 
 1. 创建一个经验CT。在CharacterClassInfo中保存不同敌人的击杀经验。
-2. 在蓝图可调用函数空中新增一个根据类别和等级获取击杀经验的Helper Func。
-3. 在Combat接口类中创建一个获取类别的接口，在BaseCharacter中实现这个接口。
+2. 在蓝图可调用函数空中新增一个根据类别和等级获取击杀经验的函数GetXPRewardForClassAndLevel。
+3. 在Combat接口类中创建一个获取类别的接口，在CharacterBase中实现这个接口。
 4. 创建一个XP MetaAttribute 用于接受经验。
 5. 创建一个接受经验的GA，等待Gameplay Event（标签为Attribute）接受经验的能力只在服务端运行，不需要复制,Per Actor。
 6. 创建一个修改IncomingXP的GE，GE的modify由Caller设置，数据的标签为Attribute.Meta.Incoming
