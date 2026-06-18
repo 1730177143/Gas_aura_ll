@@ -1189,6 +1189,19 @@ Next Steps (后续步骤)
 7. 在GA中保存该GE的类型引用，以便在GA中等待Gameplay Event后创建这个GE实例并应用到自身。
 8. 在BaseCharacter中增加一个初始 被动能力数组，在ASC中赋予这个能力并启动一次。
 
+> 发送经验Gameplay Event
+
+1. 在AS中创建一个发送游戏事件的函数，
+2. 在AS中敌方角色死亡后调用这个发送游戏事件的函数
+
+> Level Up
+
+1. 在AS中判断接受经验后是否升级。因为PS依赖于AS，因此AS中如果需要访问Player State中的数据则需要通过PlayerInterface接口访问避免循环依赖。[AuraCharacter](https://zhida.zhihu.com/search?content_id=269460552&content_type=Article&match_order=1&q=AuraCharacter&zhida_source=entity)实现了PlayerInterface接口，在相关函数中获取PlayerState中的数据然后返回。
+2. 在AS中计算得到升级数量，然后获取升级的奖励，并更新AS中的数据。**注意获取升级奖励的时候要考虑到连续升级的情况。**
+3. 调用AS中的升级函数广播升级数据更新UI。
+4. 在OverlayController中绑定AS的等级变化委托，在回调函数中获取最新的等级，然后广播UI相关的委托。
+5. 在widget中绑定Controller的等级变化UI相关的委托，并更新UI。
+
 # 调试
 
 ### 自定义日志
