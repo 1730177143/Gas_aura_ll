@@ -1216,6 +1216,11 @@ Next Steps (后续步骤)
 3. 在MenuWidget中监听button按下事件，根据button的Tag调用MenuController中 的增加属性点的函数。
 4. 在ASC中调用函数`UpgradeAttribute`与Player State解绑，判断PS中是否真的存在足够属性点，如果存在调用一个服务端RPC函数`ServerUpgradeAttribute`，在该服务端RPC函数中发送一个GameplayEvent，带上属性标签和属性magnitude。玩家有一个持续监听游戏事件的GA，可以根据游戏事件携带的Tag和magnitude创建GE并应用到自身。
 
+> 升级后回满状态类的效果
+
+1. 如果在AS的HandleIncomingXP中效果应用后直接设置生命值，此时最大生命值并没有因为等增加而改动，生命值只会增加到升级之前的最大生命值。
+2. 我们应该在属性修改后`PostAttributeChange`判断是否是由于升级导致的最大生命值增加，如果是再设置生命值为最大生命值。
+
 # 调试
 
 ### 自定义日志
