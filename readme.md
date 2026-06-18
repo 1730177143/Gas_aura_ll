@@ -1134,7 +1134,7 @@ GAS执行添加技能，使控制器变更技能信息
 
 **是否进入冷却：**通过目标GAS应用的GE是否带有冷却Tag来判断
 
-### 经验
+## 经验
 
 项目中，升级需要考虑升到下一级所需经验，升级给的点数，因此用一个DateAsset进行管理——<font style="background-color:#E7E9E8;">ULevelUpInfo</font> 
 
@@ -1196,11 +1196,25 @@ Next Steps (后续步骤)
 
 > Level Up
 
-1. 在AS中判断接受经验后是否升级。因为PS依赖于AS，因此AS中如果需要访问Player State中的数据则需要通过PlayerInterface接口访问避免循环依赖。[AuraCharacter](https://zhida.zhihu.com/search?content_id=269460552&content_type=Article&match_order=1&q=AuraCharacter&zhida_source=entity)实现了PlayerInterface接口，在相关函数中获取PlayerState中的数据然后返回。
-2. 在AS中计算得到升级数量，然后获取升级的奖励，并更新AS中的数据。**注意获取升级奖励的时候要考虑到连续升级的情况。**
-3. 调用AS中的升级函数广播升级数据更新UI。
-4. 在OverlayController中绑定AS的等级变化委托，在回调函数中获取最新的等级，然后广播UI相关的委托。
-5. 在widget中绑定Controller的等级变化UI相关的委托，并更新UI。
+1. 在AS中`HandleIncomingXP`函数判断接受经验后是否升级。因为PS依赖于AS，因此AS中如果需要访问Player State中的数据则需要通过PlayerInterface接口访问避免循环依赖。AuraCharacter实现了PlayerInterface接口，在相关函数中获取PlayerState中的数据然后返回。
+2. 在AS中`HandleIncomingXP`计算得到升级数量，然后调用AuraCharacter上`PlayerInterface`，更新AuraPlayerState中的数据并广播委托。**注意获取升级奖励的时候要考虑到连续升级的情况。**
+3. 在OverlayController中绑定AS的等级变化委托，在回调函数中获取最新的等级，然后广播UI相关的委托。
+4. 在widget中绑定Controller的等级变化UI相关的委托，并更新UI。
+
+## 属性
+
+> 属性点和技能点
+
+1. 在PlayerState中增加属性点，并在增加属性点的函数中广播新的属性点。在属性点的复制函数中同样广播新的属性点。
+2. 在AttributeMenuWidgetController中定义属性点变化的委托`AttributePointsChangedDelegate`，并绑定PS中的属性点变化委托`OnAttributePointsChangedDelegate`，在该委托的回调匿名函数中广播AttributeMenuWidgetController中定义的属性点变化委托（蓝图可委派）。在MenuController的广播初始值函数中同样广播初始属性点。
+3. 新建一个属性点行，添加到Menu中，在Menu中为该Widget设置控制器。在该Widget被设置控制器后，该Widget会绑定Controller的属性点变化委托，更新属性点显示UI
+
+> 属性点升级
+
+1. 在MenuWidget中绑定属性点变化的委托，如果属性点大于0，则启用button，否则禁用button。
+2. 在MenuController中增加一个增加属性点的蓝图可调用函数`UpgradeAttribute`，该函数调用ASC中的相关函数。
+3. 在MenuWidget中监听button按下事件，根据button的Tag调用MenuController中 的增加属性点的函数。
+4. 在ASC中调用函数`UpgradeAttribute`与Player State解绑，判断PS中是否真的存在足够属性点，如果存在调用一个服务端RPC函数`ServerUpgradeAttribute`，在该服务端RPC函数中发送一个GameplayEvent，带上属性标签和属性magnitude。玩家有一个持续监听游戏事件的GA，可以根据游戏事件携带的Tag和magnitude创建GE并应用到自身。
 
 # 调试
 
