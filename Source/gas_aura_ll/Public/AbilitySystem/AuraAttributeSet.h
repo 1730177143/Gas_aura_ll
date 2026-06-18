@@ -124,7 +124,7 @@ public:
 	// 只有在GameplayEffect修改Base Value后调用，可获取此次效果的几乎所有信息，用于应用后续逻辑
 	//监听永久属性Base Value修改 (Instant / Periodic的Infinite 或 HasDuration GE)
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
-
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 	/*
 	 * 创建属性的样板过程
 	 * 1. 声明 FGameplayAttributeData 变量，添加 UPROPERTY 和 ATTRIBUTE_ACCESSORS 宏
@@ -310,6 +310,9 @@ private:
 	void HandleIncomingXP(const FEffectProperties& Props);
 
 	void ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const;
-	
+
 	void SendXPEvent(const FEffectProperties& Props);
+	
+	bool bTopOffHealth = false;
+	bool bTopOffMana = false;
 };
