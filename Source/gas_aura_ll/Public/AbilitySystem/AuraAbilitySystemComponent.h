@@ -53,6 +53,8 @@ public:
 	//更新能力技能状态
 	void UpdateAbilityStatuses(int32 Level);
 
+	UFUNCTION(Server, Reliable)
+	void ServerSpendSpellPoint(const FGameplayTag& AbilityTag);
 protected:
 	//确保客户端 AbilitiesGivenDelegate 也能被绑定
 	virtual void OnRep_ActivateAbilities() override;
