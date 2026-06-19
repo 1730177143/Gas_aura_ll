@@ -55,6 +55,10 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSpendSpellPoint(const FGameplayTag& AbilityTag);
+
+	bool GetDescriptionsByAbilityTag(const FGameplayTag& AbilityTag, FString& OutDescription,
+	                                 FString& OutNextLevelDescription);
+
 protected:
 	//确保客户端 AbilitiesGivenDelegate 也能被绑定
 	virtual void OnRep_ActivateAbilities() override;
