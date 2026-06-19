@@ -8,6 +8,7 @@
 #include "AuraAbilitySystemLibrary.generated.h"
 
 
+class USpellMenuWidgetController;
 struct FGameplayEffectContextHandle;
 class UAttributeMenuWidgetController;
 class AAuraHUD;
@@ -43,6 +44,8 @@ public:
 		meta = (DefaultToSelf = "WorldContextObject"))
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
 
+	UFUNCTION(BlueprintPure, Category="AuraAbilitySystemLibrary|WidgetController", meta = (DefaultToSelf = "WorldContextObject"))
+	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
 	/*
 	 * Ability System Class Defaults
 	 */
