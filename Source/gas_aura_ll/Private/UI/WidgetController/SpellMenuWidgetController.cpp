@@ -3,11 +3,25 @@
 
 #include "UI/WidgetController/SpellMenuWidgetController.h"
 
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
+
 void USpellMenuWidgetController::BroadcastInitialValues()
 {
 	BroadcastAbilityInfo();
 }
 
-void USpellMenuWidgetController::BindCallBackToDependencies()
+void USpellMenuWidgetController::BindCallBacksToDependencies()
 {
+	GetAuraASC()->AbilityStatusChanged.AddLambda(
+		[this](const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag, int32 NewLevel)
+		{
+			//将技能的状态变更发送给UI
+			if (AbilityInfo)
+			{
+				FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+				Info.StatusTag = StatusTag;
+				AbilityInfoDelegate.Broadcast(Info);
+			}
+		});
 }

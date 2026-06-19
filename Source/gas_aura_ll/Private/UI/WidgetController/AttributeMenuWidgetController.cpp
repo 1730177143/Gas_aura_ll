@@ -19,7 +19,7 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 	AttributePointsChangedDelegate.Broadcast(GetAuraPS()->GetAttributePoints());
 }
 
-void UAttributeMenuWidgetController::BindCallBackToDependencies()
+void UAttributeMenuWidgetController::BindCallBacksToDependencies()
 {
 	check(AttributeInfo);
 	for (auto& Pair : GetAuraAS()->TagsToAttributes)

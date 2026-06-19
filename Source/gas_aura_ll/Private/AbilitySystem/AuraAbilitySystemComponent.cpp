@@ -221,7 +221,7 @@ void UAuraAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
 			GiveAbility(AbilitySpec);
 			//MarkAbilitySpecDirty 强制立即网络同步
 			MarkAbilitySpecDirty(AbilitySpec);
-			//更新客户端ui
+			//发送委托到 widgetController 更新客户端ui
 			ClientUpdateAbilityStatus(Info.AbilityTag, FAuraGameplayTags::Get().Abilities_Status_Eligible, 1);
 		}
 	}
@@ -236,6 +236,13 @@ void UAuraAbilitySystemComponent::OnRep_ActivateAbilities()
 		bStartupAbilitiesGiven = true;
 		AbilitiesGivenDelegate.Broadcast();
 	}
+}
+
+void UAuraAbilitySystemComponent::ClientUpdateAbilityStatus_Implementation(const FGameplayTag& AbilityTag,
+                                                                           const FGameplayTag& StatusTag,
+                                                                           int32 AbilityLevel)
+{
+	AbilityStatusChanged.Broadcast(AbilityTag, StatusTag, AbilityLevel);
 }
 
 void UAuraAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,

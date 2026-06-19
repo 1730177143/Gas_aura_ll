@@ -57,7 +57,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void BroadcastInitialValues();
-	virtual void BindCallBackToDependencies();
+	virtual void BindCallBacksToDependencies();
 
 	UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
 	FAbilityInfoSignature AbilityInfoDelegate;

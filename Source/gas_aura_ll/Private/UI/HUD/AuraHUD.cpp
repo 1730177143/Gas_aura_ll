@@ -15,7 +15,7 @@ UOverlayWidgetController* AAuraHUD::GetOverlayWidgetController(const FWidgetCont
 	{
 		OverlayWidgetController = NewObject<UOverlayWidgetController>(this, OverlayWidgetControllerClass);
 		OverlayWidgetController->SetWidgetControllerParams(WCParams);
-		OverlayWidgetController->BindCallBackToDependencies();
+		OverlayWidgetController->BindCallBacksToDependencies();
 	}
 	return OverlayWidgetController;
 }
@@ -27,7 +27,7 @@ UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetController(const
 		AttributeMenuWidgetController = NewObject<UAttributeMenuWidgetController>(
 			this, AttributeMenuWidgetControllerClass);
 		AttributeMenuWidgetController->SetWidgetControllerParams(WCParams);
-		AttributeMenuWidgetController->BindCallBackToDependencies();
+		AttributeMenuWidgetController->BindCallBacksToDependencies();
 	}
 	return AttributeMenuWidgetController;
 }
@@ -38,7 +38,7 @@ USpellMenuWidgetController* AAuraHUD::GetSpellMenuWidgetController(const FWidget
 	{
 		SpellMenuWidgetController = NewObject<USpellMenuWidgetController>(this, SpellMenuWidgetControllerClass);
 		SpellMenuWidgetController->SetWidgetControllerParams(WCParams);
-		SpellMenuWidgetController->BindCallBackToDependencies();
+		SpellMenuWidgetController->BindCallBacksToDependencies();
 	}
 	return SpellMenuWidgetController;
 }

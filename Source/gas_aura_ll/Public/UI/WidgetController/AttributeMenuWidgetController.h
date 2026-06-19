@@ -24,7 +24,7 @@ public:
 	// 初始化时广播所有属性的当前值给 View
 	virtual void BroadcastInitialValues() override;
 	// 绑定 Model 侧属性变化的回调，建立 M -> C 的连接
-	virtual void BindCallBackToDependencies() override;
+	virtual void BindCallBacksToDependencies() override;
 
 	UPROPERTY(BlueprintAssignable, Category="GAS|Attributes")
 	FAttributeInfoSignature AttributeInfoDelegate;

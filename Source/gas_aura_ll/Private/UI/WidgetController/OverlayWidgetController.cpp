@@ -19,7 +19,7 @@ void UOverlayWidgetController::BroadcastInitialValues()
 	OnMaxManaChanged.Broadcast(GetAuraAS()->GetMaxMana());
 }
 
-void UOverlayWidgetController::BindCallBackToDependencies()
+void UOverlayWidgetController::BindCallBacksToDependencies()
 {
 	GetAuraPS()->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
 	GetAuraPS()->OnLevelChangedDelegate.AddLambda(

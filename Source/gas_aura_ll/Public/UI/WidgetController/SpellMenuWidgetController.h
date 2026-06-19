@@ -16,5 +16,5 @@ class GAS_AURA_LL_API USpellMenuWidgetController : public UAuraWidgetController
 
 public:
 	virtual void BroadcastInitialValues() override;
-	virtual void BindCallBackToDependencies() override;
+	virtual void BindCallBacksToDependencies() override;
 };
