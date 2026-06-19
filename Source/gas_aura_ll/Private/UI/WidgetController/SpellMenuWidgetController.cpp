@@ -44,8 +44,17 @@ void USpellMenuWidgetController::BindCallBacksToDependencies()
 	{
 		SpellPointsChanged.Broadcast(SpellPoints);
 		CurrentSpellPoints = SpellPoints;
+
+		bool bEnableSpendPoints = false;
+		bool bEnableEquip = false;
+		ShouldEnableButtons(SelectedAbility.Status, CurrentSpellPoints, bEnableSpendPoints, bEnableEquip);
+		FString Description;
+		FString NextLevelDescription;
+
+		SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description, NextLevelDescription);
 	});
 }
+
 //接受来自 UI 的选中了哪个能力
 void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityTag)
 {
