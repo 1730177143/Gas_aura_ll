@@ -40,10 +40,15 @@ public:
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 	static FGameplayTag GetStatusFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 
+	FGameplayAbilitySpec* GetSpecFromAbilityTag(const FGameplayTag& AbilityTag);
+
 	void UpgradeAttribute(const FGameplayTag& AttributeTag);
 
 	UFUNCTION(Server, Reliable)
 	void ServerUpgradeAttribute(const FGameplayTag& AttributeTag);
+
+	//更新能力技能状态
+	void UpdateAbilityStatuses(int32 Level);
 
 protected:
 	//确保客户端 AbilitiesGivenDelegate 也能被绑定
@@ -53,4 +58,7 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientEffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec,
 	                         FActiveGameplayEffectHandle ActiveEffectHandle);
+
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAbilityStatus(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag, int32 AbilityLevel);
 };

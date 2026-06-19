@@ -5,7 +5,9 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/Abilities/AuraGameplayAbility.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 #include "gas_aura_ll/AuraLogChannels.h"
 #include "Interaction/PlayerInterface.h"
 
@@ -137,6 +139,24 @@ FGameplayTag UAuraAbilitySystemComponent::GetStatusFromSpec(const FGameplayAbili
 	return FGameplayTag();
 }
 
+//检查是否拥有指定 AbilityTag 的能力 ，没有返回空指针 nullptr
+FGameplayAbilitySpec* UAuraAbilitySystemComponent::GetSpecFromAbilityTag(const FGameplayTag& AbilityTag)
+{
+	//锁定列表， 避免循环时 列表被修改
+	FScopedAbilityListLock ActiveScopeLoc(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		for (FGameplayTag Tag : AbilitySpec.Ability.Get()->AbilityTags)
+		{
+			if (Tag.MatchesTag(AbilityTag))
+			{
+				return &AbilitySpec;
+			}
+		}
+	}
+	return nullptr;
+}
+
 
 // 客户端调用：尝试升级指定标签对应的属性
 void UAuraAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
@@ -183,6 +203,28 @@ FGameplayTag UAuraAbilitySystemComponent::GetAbilityTagFromSpec(const FGameplayA
 		}
 	}
 	return FGameplayTag();
+}
+
+void UAuraAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
+{
+	UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	for (const FAuraAbilityInfo& Info : AbilityInfo->AbilityInformation)
+	{
+		if (!Info.AbilityTag.IsValid()) continue;
+		if (Level < Info.LevelRequirement) continue;
+		if (GetSpecFromAbilityTag(Info.AbilityTag) == nullptr)
+		{
+			//满足条件，可学习 的技能
+			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Info.Ability, 1);
+			AbilitySpec.GetDynamicSpecSourceTags().AddTag(FAuraGameplayTags::Get().Abilities_Status_Eligible);
+			//给予能力， 但不激活
+			GiveAbility(AbilitySpec);
+			//MarkAbilitySpecDirty 强制立即网络同步
+			MarkAbilitySpecDirty(AbilitySpec);
+			//更新客户端ui
+			ClientUpdateAbilityStatus(Info.AbilityTag, FAuraGameplayTags::Get().Abilities_Status_Eligible, 1);
+		}
+	}
 }
 
 void UAuraAbilitySystemComponent::OnRep_ActivateAbilities()
