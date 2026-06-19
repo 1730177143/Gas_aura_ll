@@ -16,16 +16,19 @@ class GAS_AURA_LL_API UAuraDamageGameplayAbility : public UAuraGameplayAbility
 	GENERATED_BODY()
 
 public:
-
 	UFUNCTION(BlueprintCallable)
 	void CauseDamage(AActor* TargetActor);
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
-	TMap<FGameplayTag,FScalableFloat> DamageTypes;
-	
+	FGameplayTag DamageType;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	FScalableFloat Damage;
+
 	UFUNCTION(BlueprintPure)
 	FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages) const;
 };
