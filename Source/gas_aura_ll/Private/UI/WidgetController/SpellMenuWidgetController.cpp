@@ -32,6 +32,7 @@ void USpellMenuWidgetController::BindCallBacksToDependencies()
 				SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description,
 				                                     NextLevelDescription);
 			}
+
 			//将技能的状态变更发送给UI
 			if (AbilityInfo)
 			{
@@ -41,6 +42,8 @@ void USpellMenuWidgetController::BindCallBacksToDependencies()
 			}
 		});
 
+	GetAuraASC()->AbilityEquipped.AddUObject(this, &USpellMenuWidgetController::OnAbilityEquipped);
+	
 	GetAuraPS()->OnSpellPointsChangedDelegate.AddLambda([this](int32 SpellPoints)
 	{
 		SpellPointsChanged.Broadcast(SpellPoints);
@@ -65,7 +68,7 @@ void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityT
 		StopWaitingForEquipDelegate.Broadcast(SelectedAbilityType);
 		bWaitingForEquipSelection = false;
 	}
-	
+
 	const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
 	const int32 SpellPoints = GetAuraPS()->GetSpellPoints();
 	FGameplayTag AbilityStatus;
@@ -120,10 +123,63 @@ void USpellMenuWidgetController::GlobeDeselect()
 
 void USpellMenuWidgetController::EquipButtonPressed()
 {
+	// 获取当前选中技能的类别（如主动、被动等）
 	const FGameplayTag AbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
 
+	// 通知技能栏进入等待选择状态：广播 AbilityType 以便技能槽控件开始监听选择
 	WaitForEquipDelegate.Broadcast(AbilityType);
 	bWaitingForEquipSelection = true;
+
+	// 如果选中的技能当前已经是“已装备”状态，记录其所在的槽位，用于后续槽位交换或清空
+	const FGameplayTag SelectedStatus = GetAuraASC()->GetStatusFromAbilityTag(SelectedAbility.Ability);
+	if (SelectedStatus.MatchesTagExact(FAuraGameplayTags::Get().Abilities_Status_Equipped))
+	{
+		SelectedSlot = GetAuraASC()->GetSlotFromAbilityTag(SelectedAbility.Ability);
+	}
+}
+
+void USpellMenuWidgetController::SpellRowGlobePressed(const FGameplayTag& SlotTag, const FGameplayTag& AbilityType)
+{
+	// 只有当前处于“等待装备选择”状态时才处理技能槽点击
+	if (!bWaitingForEquipSelection) return;
+
+	// 检查点击的技能槽允许的技能类型是否与选中技能的类型匹配
+	// 防止将主动技能放入被动槽位，或将被动技能放入主动槽位
+	const FGameplayTag& SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
+	if (!SelectedAbilityType.MatchesTagExact(AbilityType)) return;
+
+	//调用 ServerEquipAbility 完成服务器端的装备操作
+	GetAuraASC()->ServerEquipAbility(SelectedAbility.Ability, SlotTag);
+}
+
+void USpellMenuWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status,
+                                                   const FGameplayTag& Slot, const FGameplayTag& PreviousSlot)
+{
+	// 装备操作已完成，结束等待状态
+	bWaitingForEquipSelection = false;
+
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+
+	// 构造一个空的技能信息，用于清空旧槽位的显示（PreviousSlot）
+	FAuraAbilityInfo LastSlotInfo;
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked; // 旧槽位回到未锁定（空）状态
+	LastSlotInfo.InputTag = PreviousSlot; // 标记旧槽位
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None; // 无技能
+	// 广播旧槽位的空白信息，通知 UI 更新（清空该位置图标）
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);
+
+	// 构造新装备的技能信息，填入当前状态、新槽位
+	FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	Info.StatusTag = Status;
+	Info.InputTag = Slot;
+	AbilityInfoDelegate.Broadcast(Info);
+
+	// 通知技能栏停止等待选择，并传递技能类别以恢复正常显示
+	StopWaitingForEquipDelegate.Broadcast(AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType);
+	// 通知技能球（Spell Globe）发生了重新分配，以便更新冷却/状态显示
+	SpellGlobeReassignedDelegate.Broadcast(AbilityTag);
+	// 取消当前选中状态，隐藏技能详情等
+	GlobeDeselect();
 }
 
 
