@@ -1306,7 +1306,7 @@ Next Steps (后续步骤)
 1. 如果在AS的HandleIncomingXP中效果应用后直接设置生命值，此时最大生命值并没有因为等增加而改动，生命值只会增加到升级之前的最大生命值。
 2. 我们应该在属性修改后`PostAttributeChange`判断是否是由于升级导致的最大生命值增加，如果是再设置生命值为最大生命值。
 
-### Debuff
+## Debuff
 
 负面效果一定是从伤害类型的GA生成的，伤害类GA中有所需的<font style="background-color:#E7E9E8;">FDamageEffectParams</font>，在伤害类型的GA中生成伤害类型GE时，<font style="background-color:#FBF5CB;">MakeDamageEffectParamsFromClassDefaults</font> 生成其参数即可
 
@@ -1324,7 +1324,32 @@ Next Steps (后续步骤)
 
 - 因为GE周期策略不同、防止因debuff循环调用。因此要根据GE上下文数据生成新的GE应用
 
-## 
+---
+
+> 技能Debuff
+
+1. 增加和Debuff相关的标签，debuff类型，伤害，持续时间，频率，触发概率。
+2. 创建一个伤害效果参数结构体（FDamageEffectParams），伤害效果参数包含GE相关参数，目标和原ASC，Debuff相关参数。
+3. 在DamageGA父类中增加一个创建FDamageEffectParams的函数，该函数接受一个Target目标
+4. 在自己的蓝图可调用函数库中增加一个应用GE的函数，该函数接受FDamageEffectPara作为参数，该函数通过访问FDamageEffectParams中的信息，创建并Set by Caller修改GE中的信息，最后将创建的GE应用到FDamageEffectParams中的目标上并返回GE的SpecHandle
+5. 重构ProjectileActor的重叠函数，在关联的GA中创建GE的FDamageEffectParams结构体，并传递给Actor，在Actor中填充FDamageEffectParams结构体中的目标信息，并调用蓝图可调用函数库中的函数应用GE。
+6. 在自定义计算中增加处理Debuff的功能。遍历所有的伤害类型标签，获取当前的伤害类型对应的debuff标签，然后获取该 debuff的chance，最后考虑到目标的抗性后计算最终的debuff Chance，如果判定则执行下一步Debuff。
+7. 在自定义GEContext中增加和Debuff、伤害类型相关的参数，并修改序列化函数。
+8. 添加一些自定义的蓝图可调用函数获取GEContext中的信息。
+9. 在EC计算的时候填充GEContext中与Debuff相关的信息。
+10. 在AttributeSet中处理Debuff的应用。使用Dynamic GE，创建GE并对目标使用。
+11. 在AS的PostGEExecute函数中，如果目标已经死亡，则直接返回不在应用伤害。
+
+
+
+> Debuff粒子效果
+
+1. 创建一个Component。在该component的BeginPlay中绑定所有者ASC的Tag变化标签，监听DebuffTag。
+2. 为了避免ASC没有成功初始化，在character初始化后广播ASC初始化成功的委托。Component绑定该委托，在该委托的回调函数中绑定ASC的Tag变化标签。注意使用接口来的方式降低耦合。
+3. Component中绑定Character死亡的委托。在Character死亡后发送委托。
+4. 在Debuff标签从0变成1的时候激活niagara，死亡和标签变为0的停止激活niagara。
+
+
 
 # 调试
 
