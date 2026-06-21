@@ -16,6 +16,13 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 	// RepBits：位掩码，用于标记哪些成员变量需要被序列化（节省带宽，只发送有效数据）
 	uint16 RepBits = 0;
 	//通过 IsSaving() / IsLoading() 判断是写入还是读取
+	/*
+	* Ar.IsLoading() 返回 true
+	* 表示当前正在执行反序列化（读取/加载）操作。数据从二进制流（网络包或存档文件）中读出，并填充到内存对象中。通常发生在接收端（客户端） 或 加载存档时。
+	*
+	* Ar.IsSaving() 返回 true
+	* 表示当前正在执行序列化（写入/保存）操作。数据从内存对象写入二进制流，用于发送或存储。通常发生在发送端（服务器） 或 保存存档时。
+	 */
 	if (Ar.IsSaving())
 	{
 		// 如果允许复制 Instigator 且 Instigator 有效，则设置第 0 位
@@ -59,10 +66,31 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		{
 			RepBits |= 1 << 8;
 		}
+		if (bIsSuccessfulDebuff)
+		{
+			RepBits |= 1 << 9;
+		}
+		if (DebuffDamage > 0.f)
+		{
+			RepBits |= 1 << 10;
+		}
+		if (DebuffDuration > 0.f)
+		{
+			RepBits |= 1 << 11;
+		}
+		if (DebuffFrequency > 0.f)
+		{
+			RepBits |= 1 << 12;
+		}
+		// RepBits 位掩码的第 13 位用于控制 DamageType 是否需要序列化
+		if (DamageType.IsValid())
+		{
+			RepBits |= 1 << 13; // 有效时才置位，通知接收端需要读取该字段
+		}
 	}
 	// 序列化 RepBits 本身，使用 7 位（因为只用到 0~6）
 	// Ar.SerializeBits(&RepBits, 7);
-	Ar.SerializeBits(&RepBits, 9);
+	Ar.SerializeBits(&RepBits, 14);
 
 	// 以下根据 RepBits 的各个位依次读取或写入对应的成员
 
@@ -124,7 +152,36 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 	{
 		Ar << bIsBlockedHit;
 	}
-
+	if (RepBits & (1 << 9))
+	{
+		Ar << bIsSuccessfulDebuff;
+	}
+	if (RepBits & (1 << 10))
+	{
+		Ar << DebuffDamage;
+	}
+	if (RepBits & (1 << 11))
+	{
+		Ar << DebuffDuration;
+	}
+	if (RepBits & (1 << 12))
+	{
+		Ar << DebuffFrequency;
+	}
+	// 反序列化阶段，检查第 13 位是否被置位
+	if (RepBits & (1 << 13))
+	{
+		// 如果是加载（接收端），且共享指针尚未持有对象，则动态创建一个 FGameplayTag
+		if (Ar.IsLoading())
+		{
+			if (!DamageType.IsValid())
+			{
+				DamageType = TSharedPtr<FGameplayTag>(new FGameplayTag());
+			}
+		}
+		// 调用 FGameplayTag 的自定义网络序列化函数，完成具体数据的读/写
+		DamageType->NetSerialize(Ar, Map, bOutSuccess);
+	}
 
 	// 无论是否传输了 Instigator 和 EffectCauser，在加载完成后都调用 AddInstigator
 	// 主要目的是初始化 InstigatorAbilitySystemComponent（能力系统组件引用），确保上下文内部状态正确
