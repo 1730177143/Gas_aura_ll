@@ -679,6 +679,20 @@ GA流程：
 
 ## GE
 
+### **Component**
+
+组件可赋予 GE 各种各样的行为，具体可添加的组件如下：
+
+- `UChanceToApplyGameplayEffectComponent`：让 GE 变成概率施加；
+- `UBlockAbilityTagsGameplayEffectComponent`：负责阻止基于 Gameplay Tags 激活的 Gameplay Ability，针对拥有 GE 的目标 Actor；
+- `UAssetTagsGameplayEffectComponent`：让 GE 资产拥有 Tags，不会转移至任何 Actor；
+- `UAdditionalEffectsGameplayEffectComponent`：添加附加的 GEs，它们可在特定条件下激活（或无条件）；
+- `UTargetTagsGameplayEffectComponent`：将 Tags 授予 GE 的目标或拥有者 Actor；
+- `UTargetTagRequirementsGameplayEffectComponent`：特定对目标（GE 的拥有者）Tags 的需求，并据此决定该 GE 是否施加或继续执行；
+- `URemoveOtherGameplayEffectComponent`：基于特定条件，移除其他 GE；
+- `UCustomCanApplyGameplayEffectComponent`：负责配置 `CustomApplicationRequirement `函数，确认该 GE 是否应被施加；
+- `UImmunityGameplayEffectComponent`：负责阻止其他 GESpec 的施加；
+
 ### FAuraGameEffectContext 自定义GE上下文
 
 原有 GEContex 无法满足现有需求（获取伤害是否暴击、格挡...），需要继承 GEContex，添加内容

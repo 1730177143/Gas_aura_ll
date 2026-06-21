@@ -11,7 +11,7 @@
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "Interaction/PlayerInterface.h"
-
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/AuraPlayerController.h"
 
@@ -211,9 +211,101 @@ void UAuraAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 	}
 }
 
+/**
+ * 对目标角色施加 Debuff 效果（持续伤害）
+ * 
+ * 从传入的 FEffectProperties 中提取 Debuff 相关参数（伤害类型、伤害值、持续时间、触发频率），
+ * 动态创建一个临时的 GameplayEffect，配置为周期性地对目标造成额外伤害（修改 IncomingDamage 属性），
+ * 并将该效果应用到目标的 ASC 上。
+ * 
+ * @param Props 封装了效果源和目标信息的结构体，其中 EffectContextHandle 已包含 Debuff 的具体参数
+ */
 void UAuraAttributeSet::Debuff(const FEffectProperties& Props)
 {
-	
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+	// 创建新的效果上下文，用于即将构造的 Debuff GE，并将源角色设为来源对象
+	FGameplayEffectContextHandle EffectContext = Props.SourceASC->MakeEffectContext();
+	EffectContext.AddSourceObject(Props.SourceAvatarActor);
+	// 从原始效果的上下文中读取 Debuff 参数（由之前的判定逻辑写入）
+	const FGameplayTag DamageType = UAuraAbilitySystemLibrary::GetDamageType(Props.EffectContextHandle);
+	const float DebuffDamage = UAuraAbilitySystemLibrary::GetDebuffDamage(Props.EffectContextHandle);
+	const float DebuffDuration = UAuraAbilitySystemLibrary::GetDebuffDuration(Props.EffectContextHandle);
+	const float DebuffFrequency = UAuraAbilitySystemLibrary::GetDebuffFrequency(Props.EffectContextHandle);
+
+	// 动态创建一个 GameplayEffect 对象，使用 TransientPackage 避免被 GC 过早回收
+	FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageType.ToString());
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+
+	// 配置 GE 的持续时间和触发周期
+	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	Effect->Period = DebuffFrequency;
+	Effect->DurationMagnitude = FScalableFloat(DebuffDuration);
+
+	// 获取当前伤害类型对应的 Debuff 标签（例如 Fire 伤害对应 Burning Debuff）
+	const FGameplayTag DebuffTag = GameplayTags.DamageTypesToDebuffs[DamageType];
+	/*
+	 * 变量 'InheritableOwnedTagsContainer' 已被弃用，原因: 'Inheritable Owned Tags Container is deprecated. 
+	 * To configure, add a UTargetTagsGameplayEffectComponent. To access, use GetGrantedTags. 
+	 * - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.'
+	 */
+	// Effect->InheritableOwnedTagsContainer.AddTag(DebuffTag);
+	// ================= 新版 API (UE 5.3+ 组件化 GAS) =================
+	// 1. 创建一个用于保存标签的 FInheritedTagContainer 容器
+	FInheritedTagContainer TagContainer;
+
+	// 2. 为 GameplayEffect 动态添加 UTargetTagsGameplayEffectComponent 组件
+	UTargetTagsGameplayEffectComponent& TargetTagsComponent = Effect->AddComponent<
+		UTargetTagsGameplayEffectComponent>();
+
+	// 3. 向容器中添加标签 (AddTag 会自动将其归类到 Added 标签列表中)
+	TagContainer.AddTag(DebuffTag);
+
+
+	// 4. 将配置好的容器标签应用到组件上
+	TargetTagsComponent.SetAndApplyTargetTagChanges(TagContainer);
+	// ===============================================================
+
+
+	// 设置堆叠规则：按来源聚合，最多叠加 1 层（同一来源的同一 Debuff 不叠加）
+	Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
+	Effect->StackLimitCount = 1;
+
+	/*
+	//在应用后重置时，重置持续时间
+	Effect->StackDurationRefreshPolicy = EGameplayEffectStackingDurationPolicy::RefreshOnSuccessfulApplication;
+	//在应用时，触发并重置Period时间
+	Effect->StackPeriodResetPolicy = EGameplayEffectStackingPeriodPolicy::ResetOnSuccessfulApplication;
+	//GE时间到了默认清除所有层数，还有可以清除单层的设置
+	Effect->StackExpirationPolicy = EGameplayEffectStackingExpirationPolicy::ClearEntireStack;
+	//Effect->OverflowEffects.Add() //在叠加层数超出时，将触发此数组内的GE应用到角色
+	Effect->bDenyOverflowApplication = true; //设置为true时，叠加层数超出时，将不会刷新GE实例
+	Effect->bClearStackOnOverflow = true; //设置为true时，叠加层数超出时，将清除GE
+	*/
+
+	// 获取当前 Modifiers 数组的大小作为新元素的索引（添加前的数组长度即为新元素插入后的位置）
+	const int32 Index = Effect->Modifiers.Num();
+	// 向 Modifiers 数组中添加一个空的修改器信息结构体，用于配置 Debuff 伤害
+	Effect->Modifiers.Add(FGameplayModifierInfo());
+	// 通过保存的索引获取刚添加的修改器的引用，以便后续填充具体配置
+	FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+
+	// 设置修改器的幅度值（Debuff 造成的额外伤害），使用 FScalableFloat 以支持等级缩放曲线
+	ModifierInfo.ModifierMagnitude = FScalableFloat(DebuffDamage);
+	// 设置修改器的运算方式为加法：将 DebuffDamage 加到目标的 IncomingDamage 属性上
+	ModifierInfo.ModifierOp = EGameplayModOp::Additive;
+	// 指定要修改的属性为 IncomingDamage（所有来源伤害的统一入口属性）
+	ModifierInfo.Attribute = UAuraAttributeSet::GetIncomingDamageAttribute();
+
+	// 基于配置好的 GE 和上下文创建效果规格，并将 Debuff 伤害类型写回上下文（用于后续可能的查询）
+	if (FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContext, 1.f))
+	{
+		FAuraGameplayEffectContext* AuraContext = static_cast<FAuraGameplayEffectContext*>(MutableSpec->GetContext().
+			Get());
+		TSharedPtr<FGameplayTag> DebuffDamageType = MakeShareable(new FGameplayTag(DamageType));
+		AuraContext->SetDamageType(DebuffDamageType);
+		// 最终将 Debuff GE 应用到目标身上
+		Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
+	}
 }
 
 void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit,
@@ -263,7 +355,12 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	// 填充效果属性结构体，方便在后续逻辑中获取源和目标信息
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
-
+	//避免死亡后依然触发效果
+	if (Props.TargetCharacter->Implements<UCombatInterface>() &&
+		ICombatInterface::Execute_IsDead(Props.TargetCharacter))
+	{
+		return;
+	}
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
