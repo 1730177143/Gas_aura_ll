@@ -67,6 +67,57 @@ UExecCalc_Damage::UExecCalc_Damage()
 	RelevantAttributesToCapture.Add(DamageStatics().PhysicalResistanceDef);
 }
 
+/**
+ * 根据当前伤害类型判定是否触发对应的 Debuff 效果
+ * 
+ * 遍历伤害类型与Debuff的映射，从 GE Spec 中读取伤害值和 Debuff 参数，
+ * 结合目标的 Debuff 抗性计算有效触发几率，若判定成功则在效果上下文中标记 Debuff 信息。
+ * 
+ * @param ExecutionParams 自定义计算执行参数，用于获取属性捕获值
+ * @param Spec 当前执行的 GameplayEffect 规格
+ * @param EvaluationParameters 属性聚合评估参数
+ * @param InTagsToDefs 属性标签到捕获定义的映射表
+ */
+void UExecCalc_Damage::DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
+                                       const FGameplayEffectSpec& Spec,
+                                       FAggregatorEvaluateParameters EvaluationParameters,
+                                       const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>&
+                                       InTagsToDefs) const
+{
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+
+	// 遍历所有伤害类型及其对应的 Debuff 类型
+	for (TPair<FGameplayTag, FGameplayTag> Pair : GameplayTags.DamageTypesToDebuffs)
+	{
+		const FGameplayTag& DamageType = Pair.Key;
+		const FGameplayTag& DebuffType = Pair.Value;
+
+		// 获取当前伤害类型的实际伤害值，若未设置则返回 -1
+		const float TypeDamage = Spec.GetSetByCallerMagnitude(DamageType, false, -1.f);
+		if (TypeDamage > -.5f) // 有实际伤害（含浮点误差容限）
+		{
+			// 从 Spec 中读取来源施加的 Debuff 几率
+			const float SourceDebuffChance = Spec.GetSetByCallerMagnitude(GameplayTags.Debuff_Chance, false, -1.f);
+
+			// 获取目标的 Debuff 抗性值
+			float TargetDebuffResistance = 0.f;
+			const FGameplayTag& ResistanceTag = GameplayTags.DamageTypesToResistances[DamageType];
+			ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(InTagsToDefs[ResistanceTag],
+			                                                           EvaluationParameters, TargetDebuffResistance);
+			TargetDebuffResistance = FMath::Max<float>(TargetDebuffResistance, 0.f); // 抗性不低于0
+
+			// 计算有效触发几率 = 来源几率 * (100 - 目标抗性) / 100
+			const float EffectiveDebuffChance = SourceDebuffChance * (100 - TargetDebuffResistance) / 100.f;
+			const bool bDebuff = FMath::RandRange(1, 100) < EffectiveDebuffChance; // 随机判定
+
+			if (bDebuff)
+			{
+
+			}
+		}
+	}
+}
+
 
 void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
                                               FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const

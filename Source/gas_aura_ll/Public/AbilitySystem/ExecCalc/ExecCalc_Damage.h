@@ -17,6 +17,10 @@ class GAS_AURA_LL_API UExecCalc_Damage : public UGameplayEffectExecutionCalculat
 public:
 	UExecCalc_Damage();
 
+	void DetermineDebuff(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
+						 const FGameplayEffectSpec& Spec,
+						 FAggregatorEvaluateParameters EvaluationParameters,
+						 const TMap<FGameplayTag, FGameplayEffectAttributeCaptureDefinition>& InTagsToDefs) const;
 
 	//GE 应用时调用 Execute
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
