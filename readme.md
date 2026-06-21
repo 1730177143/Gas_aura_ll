@@ -1329,9 +1329,9 @@ Next Steps (后续步骤)
 > 技能Debuff
 
 1. 增加和Debuff相关的标签，debuff类型，伤害，持续时间，频率，触发概率。
-2. 创建一个伤害效果参数结构体（FDamageEffectParams），伤害效果参数包含GE相关参数，目标和原ASC，Debuff相关参数。
-3. 在DamageGA父类中增加一个创建FDamageEffectParams的函数，该函数接受一个Target目标
-4. 在自己的蓝图可调用函数库中增加一个应用GE的函数，该函数接受FDamageEffectPara作为参数，该函数通过访问FDamageEffectParams中的信息，创建并Set by Caller修改GE中的信息，最后将创建的GE应用到FDamageEffectParams中的目标上并返回GE的SpecHandle
+2. AuraAbilityTypes创建一个伤害效果参数结构体（FDamageEffectParams），伤害效果参数包含GE相关参数，目标和原ASC，Debuff相关参数。
+3. 在DamageGA父类AuraDamageGameplayAbility中增加一个创建FDamageEffectParams的函数MakeDamageEffectParamsFromClassDefaults，该函数接受一个TargetActor
+4. 在自己的蓝图可调用函数库中增加一个应用GE的函数ApplyDamageEffect，该函数接受FDamageEffectPara作为参数，该函数通过访问FDamageEffectParams中的信息，创建并Set by Caller修改GE中的信息，最后将创建的GE应用到FDamageEffectParams中的目标上并返回GE的SpecHandle
 5. 重构ProjectileActor的重叠函数，在关联的GA中创建GE的FDamageEffectParams结构体，并传递给Actor，在Actor中填充FDamageEffectParams结构体中的目标信息，并调用蓝图可调用函数库中的函数应用GE。
 6. 在自定义计算中增加处理Debuff的功能。遍历所有的伤害类型标签，获取当前的伤害类型对应的debuff标签，然后获取该 debuff的chance，最后考虑到目标的抗性后计算最终的debuff Chance，如果判定则执行下一步Debuff。
 7. 在自定义GEContext中增加和Debuff、伤害类型相关的参数，并修改序列化函数。
