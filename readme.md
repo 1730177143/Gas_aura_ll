@@ -932,6 +932,91 @@ GAS执行添加技能，使控制器变更技能信息
 6. 编辑器中的UI绑定Controller中的委托，并更新自己的数据。
 7. 注意ASC中的委托需要保证在服务端和客户端均被执行。在服务端，可以在基于初始能力后广播委托。在客户端，可以重写override在ASC的ActivatableAbilities绑定的网络复制回调函数（OnRep_ActivatableAbilities）中广播委托。ActivatableAbilities是一个GASpec的从其，在给予能力时，ActivatableAbilities会发生变化，因此会被同步到客户端，相应的回调函数会被激活。
 
+### 和技能相关的UI逻辑
+
+> 技能菜单控制器设置
+
+1. 增加一个SpellMenuController控制器，为蓝图类型，创建控制器的蓝图。
+2. 再Hud中保存全局唯一的技能菜单控制器，并增加获取技能菜单控制器的函数。再HUD蓝图中配置SpellMenuController的类类型（蓝图版）
+3. 在蓝图可调用函数库中增加一个全局获取菜单控制器的函数。
+
+> 技能菜单中的已装备界面
+
+1. 实现方式同Overlay中的已装备技能菜单类似
+
+> 能力类型和能力状态
+
+1. 能力状态：锁定，带解锁，已解锁，已装备
+2. 能力类型：主动，被动，None
+3. 在赋予初始能力的时候给能力添加已装备的状态标签。
+4. 在ASC中添加一个函数，根据GASpec返回该能力的状态标签。
+
+> 能力状态更新
+
+1. 在ASC中增加一个更新GA的函数，遍历数据资产中的GA，并根据GA的TAG寻找SPEC，如果没找到，并且等级符合GA的解锁条件，则创建SPec并 赋予角色该GA，修改GA的状态为Eligible。然后立刻进行能力复制
+
+> 技能菜单按钮更新
+
+1. 根据选中的按钮所代表的Gameplay的状态标签和当前的技能点更新菜单按钮。
+2. 选中按钮后，调用controller的蓝图可调用函数，发送一个带有两个bool变量的委托
+3. Widget根据bool变量设置button的状态（不可点击和可点击）。
+4. 在技能状态和技能点发生变化后的回调函数中，也要更新技能菜单，即发送一个带有两个bool变量的委托
+
+> 消耗技能点
+
+1. 在controller中创建一个蓝图可调用函数，在按钮点击后调用这个函数
+2. 步骤1的蓝图可调用函数调用 ASC的消耗技能点函数
+3. 在ASC消耗技能点函数中，更新技能状态和技能等级，并广播更新后的技能等级。
+
+
+
+> 装备技能同步更新
+
+1. 当我们点击技能槽装备所选的技能时，会调用Controller的函数，在该函数中后先进行合规判断，被动技能只能装备到被动技能槽，之后调用服务端RPC函数更新技能状态。在服务端RPC函数的 最后，会调用客户端RPC函数更新UI。
+
+**装配区域：**
+
++ 和主界面技能栏类似，通过输入标签来区分是否是该技能栏需要接管
++ 通过代理更新技能信息
+
+**升级区域:**
+
++ 技能分状态，未到条件、未解锁、已解锁和已装备四种状态
++ 四种状态采用Tag进行区分,技能界面的技能也根据此来进行显示不同状态
++ 每个技能球对应一个技能Tag，接受到技能广播时，按照Tag进行筛选
++ <font style="background-color:#FBF5CB;">UpdateAbilityStatus</font> 函数会根据等级来匹配技能信息表中对应的技能，将技能添加至GAS中，然后RPC客户端广播技能状态变化。在Character中升级时进行调用
+
+**技能选中：技能选中会导致说明栏、解锁、装备按钮的状态变化**
+
++ 技能球选中调用代理进行调用(<font style="background-color:#FBF5CB;">SpellGlobeSelected</font>)，根据技能标签查询技能是否在GAS中有效，技能状态标签是否占位来获取技能的标签状态
++ 根据技能点数和技能标签及技能状态标签，决定按钮的启用与否（<font style="background-color:#FBF5CB;">ShouldEnableBtns</font>）
++ 广播 <font style="background-color:#EFF0F0;">SpellGlobeSelectedDel</font> ，界面进行按钮状态更改
++ 打开菜单，技能选择框未变，但是可能因为其他情况导致技能状态改变了(升级)，导致相应的按钮无法及时更新，因此**需要在其他能更新技能状态的地方也广播按钮的改变**
++ 从技能描述的资产管理类获取技能描述信息
+
+**技能装配**
+
++ 按下技能装配按钮，播放提示框动画，切换技能球按钮得取消
++ 发送选中技能的技能Tag，技能栏的装配Tag
++ 清除技能、选中技能栏 以及 技能之前的装配栏(如果存在) Tag
++ 赋予技能新的装配栏tag（选中的装配栏）,赋予装配栏新的技能信息。广播相关需要更改的信息
+
+**技能升级：**
+
++ 升级时获取技能Tag，从GAS中根据tag获取Spec和status
++ 解锁改status或者升级该Spec的Level
+
+### 主界面技能栏接受技能相关的UI信息
+
+创建一个资产管理(<font style="background-color:#EFF0F0;">FAuraAbilityInfo</font>)，在里面配表，填入技能需要的相关信息
+
+GAS执行添加技能，使控制器变更技能信息
+
++ 为角色添加能力时(<font style="background-color:#FBF5CB;">AddCharacterAbilities</font>)，<font style="background-color:#EFF0F0;">UAuraAbilitySystemComponent</font> 的 <font style="background-color:#CEF5F7;">AbilitiesGiveDel </font>代理进行广播，告知 <font style="background-color:#EFF0F0;">UOverlayWidgetController</font> 执行初始化技能信息(<font style="background-color:#FBF5CB;">BroadcastAbilityInfo</font>)
++ <font style="background-color:#EFF0F0;">UOverlayWidgetController</font> 添加代理(<font style="background-color:#EFF0F0;">FForEachAbility</font>)绑定函数(根据技能Tag,获取技能相关UI信息)
++ <font style="background-color:#EFF0F0;">UAuraAbilitySystemComponent</font> 执行函数(<font style="background-color:#FBF5CB;">ForEachAbility</font>)，循环获取有效的能力，执行代理(<font style="background-color:#EFF0F0;">FForEachAbility</font>)进行广播能力。代理在(<font style="background-color:#EFF0F0;">UOverlayWidgetController</font>::<font style="background-color:#FBF5CB;">BroadcastAbilityInfo</font>)中设置为了广播的Lambda表达式，<font style="background-color:#FBF5CB;">ForEachAbility</font> 相当根据能力的Tag查找DA获取能力相关的UI信息，并且进行广播
++ UI界面中的技能球存在输入Tag，当技能信息广播时，判断相关技能是否为对应的输入Tag，如果是，则接受其信息，应用在界面上
+
 # 敌人
 
 ## 敌人血条
@@ -1220,6 +1305,26 @@ Next Steps (后续步骤)
 
 1. 如果在AS的HandleIncomingXP中效果应用后直接设置生命值，此时最大生命值并没有因为等增加而改动，生命值只会增加到升级之前的最大生命值。
 2. 我们应该在属性修改后`PostAttributeChange`判断是否是由于升级导致的最大生命值增加，如果是再设置生命值为最大生命值。
+
+### Debuff
+
+负面效果一定是从伤害类型的GA生成的，伤害类GA中有所需的<font style="background-color:#E7E9E8;">FDamageEffectParams</font>，在伤害类型的GA中生成伤害类型GE时，<font style="background-color:#FBF5CB;">MakeDamageEffectParamsFromClassDefaults</font> 生成其参数即可
+
+为GE上下文添加了变量，使得debuff所需的参数传入GE上下文
+
+
+
+蓝图库写了 <font style="background-color:#FBF5CB;">ApplyDamageEffect</font> 应用GE的函数，传入<font style="background-color:#E7E9E8;">FDamageEffectParams</font>参数调用即可
+
+- 将参数解析，为GE的修饰器添加tag与其数值
+
+- 在**计算伤害的类**中解析GE修饰器中的值，处理之后传入GE上下文
+
+- 在属性集**投递伤害中**根据GE上下文判断是否应用Debuff，并且解析上下文数据，创建一个新的GE作为Debuff的GE
+
+- 因为GE周期策略不同、防止因debuff循环调用。因此要根据GE上下文数据生成新的GE应用
+
+## 
 
 # 调试
 

@@ -115,21 +115,27 @@ void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 		OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
 	}
 }
-
-void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status,
-                                                 const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const
+void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const
 {
 	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
-
+	
+	// 构造一个代表“空槽位”的技能信息，用于清空 PreviousSlot 的 UI 显示
 	FAuraAbilityInfo LastSlotInfo;
-	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;
-	LastSlotInfo.InputTag = PreviousSlot;
-	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;
-	// Broadcast empty info if PreviousSlot is a valid slot. Only if equipping an already-equipped spell
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;  // 状态标记为未锁定（无技能）
+	LastSlotInfo.InputTag = PreviousSlot;                             // 指向旧槽位
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;            // 无技能
+
+	// 第一次广播 AbilityInfoDelegate：通知 Overlay UI 清空旧槽位上的技能图标
+	// （仅当 PreviousSlot 是一个有效槽位且该技能之前已装备时才有实际意义）
 	AbilityInfoDelegate.Broadcast(LastSlotInfo);
 
+	// 从数据资产中查找新装备技能对应的显示信息
 	FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
-	Info.StatusTag = Status;
-	Info.InputTag = Slot;
+	Info.StatusTag = Status;   // 更新为实际状态（已装备）
+	Info.InputTag = Slot;      // 指向新槽位
+
+	// 第二次广播 AbilityInfoDelegate：通知 Overlay UI 在新槽位上显示该技能的图标和信息
+	// 注意：此处的 AbilityInfoDelegate 是 UOverlayWidgetController 自己的委托实例，
+	// 与 SpellMenuWidgetController 中的同名委托互相独立，仅会驱动 HUD 技能栏的刷新
 	AbilityInfoDelegate.Broadcast(Info);
 }
