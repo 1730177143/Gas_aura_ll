@@ -57,13 +57,14 @@ void UAuraAbilitySystemComponent::AddCharacterPassiveAbilities(
 void UAuraAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid()) return;
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
-		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
-		// if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		AbilitySpecInputPressed(AbilitySpec);
+		if (AbilitySpec.IsActive())
 		{
-			//AbilitySpecInputPressed 通知能力，能力对应的按键被按下
-			AbilitySpecInputPressed(AbilitySpec);
+			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle,
+			                      AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 		}
 	}
 }
@@ -89,14 +90,42 @@ void UAuraAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputT
 
 void UAuraAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
 {
+	// 输入标签无效则直接返回
 	if (!InputTag.IsValid()) return;
 
+	// 遍历所有当前可激活的技能
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
+		// 检查技能的动态源标签中是否包含该输入标签，且技能处于激活状态
+		// 注意：新版 GAS 推荐使用 GetDynamicSpecSourceTags() 替代直接访问 DynamicAbilityTags
+		// 以确保正确获取与技能实例相关的动态标签（特别是实例化技能或预测中技能）
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && AbilitySpec.IsActive())
-		// if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag) && AbilitySpec.IsActive())
 		{
+			// 通知技能输入已释放
 			AbilitySpecInputReleased(AbilitySpec);
+			// ================= 新版 API (UE 5.3+ 获取 PredictionKey) =================
+			// 抑制弃用警告，因为我们需要兼容可能没有 PrimaryInstance 的边缘情况 (如 InstancedPerExecution)
+			PRAGMA_DISABLE_DEPRECATION_WARNINGS
+
+			// 1. 获取技能的主实例 (对于默认的 InstancedPerActor 策略，这会返回当前激活的实例)
+			const UGameplayAbility* Instance = AbilitySpec.GetPrimaryInstance();
+
+			// 2. 从实例的 CurrentActivationInfo 中获取 PredictionKey。
+			// 如果实例为空，则回退到旧的 ActivationInfo (用于兼容极少数未实例化的边缘情况)
+			FPredictionKey OriginalPredictionKey = Instance
+				                                       ? Instance->GetCurrentActivationInfo().
+				                                                   GetActivationPredictionKey()
+				                                       : AbilitySpec.ActivationInfo.GetActivationPredictionKey();
+
+			PRAGMA_ENABLE_DEPRECATION_WARNINGS
+			// ===============================================================
+
+			// 将释放事件通过网络复制到其他客户端/服务器
+			InvokeReplicatedEvent(
+				EAbilityGenericReplicatedEvent::InputReleased,
+				AbilitySpec.Handle,
+				OriginalPredictionKey
+			);
 		}
 	}
 }
