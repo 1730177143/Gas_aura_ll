@@ -101,7 +101,15 @@ FString UAuraFireBolt::GetNextLevelDescription(int32 Level)
 	                       ScaledDamage);
 }
 
-
+/**
+ * 生成多个火球投射物，支持扇形散布和追踪目标
+ * 
+ * @param ProjectileTargetLocation  投射物的目标位置，用于确定发射方向和可能的追踪目标
+ * @param SocketTag                 发射投射物的骨骼/插槽标签，用于获取起始位置
+ * @param bOverridePitch            是否覆盖默认仰角
+ * @param PitchOverride             覆盖的仰角值（当 bOverridePitch 为 true 时生效）
+ * @param HomingTarget              追踪目标 Actor（若为 nullptr 则追踪地面目标位置）
+ */
 void UAuraFireBolt::SpawnProjectiles(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag,
                                      bool bOverridePitch, float PitchOverride, AActor* HomingTarget)
 {
@@ -109,59 +117,65 @@ void UAuraFireBolt::SpawnProjectiles(const FVector& ProjectileTargetLocation, co
 	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
 	if (!bIsServer) return;
 
-	if (GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	// 从战斗接口获取插槽位置
+	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+		GetAvatarActorFromActorInfo(), SocketTag);
+
+	// 计算从插槽指向目标的方向
+	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+	// 设置仰角（如需要）
+	if (bOverridePitch)
 	{
-		//限制产生火球的最大数量
-		NumProjectiles = FMath::Min(MaxNumProjectiles, GetAbilityLevel());
+		Rotation.Pitch = PitchOverride;
+	}
 
-		//根据可生成数量进行逻辑判断
-		if (NumProjectiles > 1)
+	const FVector Forward = Rotation.Vector();
+	// 计算实际发射的投射物数量，取技能等级和配置数量的较小值
+	const int32 EffectiveNumProjectiles = FMath::Min(NumProjectiles, GetAbilityLevel());
+	// 在扇面内均匀分布方向角度
+	TArray<FRotator> Rotations = UAuraAbilitySystemLibrary::EvenlySpacedRotators(
+		Forward, FVector::UpVector, ProjectileSpread, EffectiveNumProjectiles);
+
+	// 遍历每个计算出的方向，生成对应的投射物
+	for (const FRotator& Rot : Rotations)
+	{
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(SocketLocation);
+		SpawnTransform.SetRotation(Rot.Quaternion());
+
+		// 使用 Deferred 方式生成投射物，以便在生成前配置属性
+		AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(
+			ProjectileClass,
+			SpawnTransform,
+			GetOwningActorFromActorInfo(),
+			Cast<APawn>(GetAvatarActorFromActorInfo()),
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+		// 为投射物填充伤害参数
+		Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults();
+		
+		// 设置追踪目标
+		if (HomingTarget && HomingTarget->Implements<UCombatInterface>())
 		{
-			// 从战斗接口获取插槽位置
-			const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
-				GetAvatarActorFromActorInfo(), SocketTag);
-
-			// 计算从插槽指向目标的方向
-			FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-			//设置仰角
-			if (bOverridePitch)
-			{
-				Rotation.Pitch = PitchOverride;
-			}
-
-			const float DeltaSpread = ProjectileSpread / NumProjectiles; //技能分的段数
-			const FVector LeftOfSpread = Rotation.Vector().RotateAngleAxis(-ProjectileSpread / 2.f, FVector::UpVector);
-			//获取到最左侧的角度
-
-			for (int32 i = 0; i < NumProjectiles; i++)
-			{
-				const FVector Direction = LeftOfSpread.RotateAngleAxis(DeltaSpread * (i + 0.5f), FVector::UpVector);
-				//获取当前分段的角度
-				FTransform SpawnTransform;
-				SpawnTransform.SetLocation(SocketLocation);
-				SpawnTransform.SetRotation(Direction.Rotation().Quaternion());
-
-				//SpawnActorDeferred将异步创建实例，在实例创建完成时，相应的数据已经应用到了实例身上
-				AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(
-					ProjectileClass,
-					SpawnTransform,
-					GetOwningActorFromActorInfo(),
-					Cast<APawn>(GetAvatarActorFromActorInfo()),
-					ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
-				Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults();
-
-				//确保变换设置被正确应用
-				Projectile->FinishSpawning(SpawnTransform);
-
-				UKismetSystemLibrary::DrawDebugArrow(GetAvatarActorFromActorInfo(), SocketLocation,
-				                                     SocketLocation + Direction * 100.f, 5, FLinearColor::Green, 120,
-				                                     5);
-			}
+			// 如果提供了有效的活体目标，追踪其根组件
+			Projectile->ProjectileMovement->HomingTargetComponent = HomingTarget->GetRootComponent();
 		}
 		else
 		{
-			SpawnProjectile(ProjectileTargetLocation, SocketTag, bOverridePitch, PitchOverride);
+			// 没有活体目标时，创建一个临时场景组件并放置在目标位置，作为追踪点
+			//ProjectileMovement->HomingTargetComponent是弱引用，ProjectileMovement销毁时，不会去销毁HomingTargetComponent
+			//所以为了避免GC无法回收，在 Projectile 定义 HomingTargetSceneComponent
+			Projectile->HomingTargetSceneComponent = NewObject<USceneComponent>(USceneComponent::StaticClass());
+			Projectile->HomingTargetSceneComponent->SetWorldLocation(ProjectileTargetLocation);
+			Projectile->ProjectileMovement->HomingTargetComponent = Projectile->HomingTargetSceneComponent;
 		}
+			// 随机化追踪加速度，增强多样性
+    		Projectile->ProjectileMovement->HomingAccelerationMagnitude = FMath::FRandRange(
+    			HomingAccelerationMin, HomingAccelerationMax);
+    		// 根据技能配置决定是否启用追踪
+    		Projectile->ProjectileMovement->bIsHomingProjectile = bLaunchHomingProjectiles;
+    		
+    		// 完成生成，触发 Construction Script 和 BeginPlay
+    		Projectile->FinishSpawning(SpawnTransform);
 	}
 }

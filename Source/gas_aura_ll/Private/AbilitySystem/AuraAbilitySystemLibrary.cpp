@@ -400,6 +400,77 @@ FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const 
 	return EffectContextHandle;
 }
 
+/**
+ * 生成一组在指定扇面内均匀分布的旋转角度（Rotator）
+ * 
+ * @param Forward      中心方向向量（如角色前向或目标方向）
+ * @param Axis         旋转轴，通常为 FVector::UpVector（绕Z轴）或自定义轴
+ * @param Spread       总扇面角度（度），如 90.f 表示 ±45° 范围
+ * @param NumRotators  需要生成的旋转数量
+ * @return 均匀分布在 [-Spread/2, Spread/2] 区间内的旋转数组
+ */
+TArray<FRotator> UAuraAbilitySystemLibrary::EvenlySpacedRotators(const FVector& Forward, const FVector& Axis,
+                                                                 float Spread, int32 NumRotators)
+{
+	TArray<FRotator> Rotators;
+
+	// 计算扇面左侧边界方向：中心方向绕 Axis 旋转 -Spread/2
+	const FVector LeftOfSpread = Forward.RotateAngleAxis(-Spread / 2.f, Axis);
+	if (NumRotators > 1)
+	{
+		// 计算相邻旋转之间的角度间隔（扇面等分）
+		const float DeltaSpread = Spread / (NumRotators - 1);
+		for (int32 i = 0; i < NumRotators; i++)
+		{
+			// 从左边界开始，逐步增加 DeltaSpread，绕 Axis 旋转得到第 i 个方向
+			const FVector Direction = LeftOfSpread.RotateAngleAxis(DeltaSpread * i, FVector::UpVector);
+			// 将方向向量转换为 FRotator 并保存
+			Rotators.Add(Direction.Rotation());
+		}
+	}
+	else
+	{
+		// 只有一个时，直接使用 Forward 方向对应的旋转
+		Rotators.Add(Forward.Rotation());
+	}
+	return Rotators;
+}
+
+/**
+ * 生成一组在指定扇面内均匀分布的方向向量
+ * 
+ * @param Forward     中心方向向量（如角色前向或目标方向）
+ * @param Axis        旋转轴，通常为 FVector::UpVector（绕Z轴）或自定义轴
+ * @param Spread      总扇面角度（度），如 90.f 表示 ±45° 范围
+ * @param NumVectors  需要生成的方向向量数量
+ * @return 均匀分布在 [-Spread/2, Spread/2] 区间内的方向向量数组
+ */
+TArray<FVector> UAuraAbilitySystemLibrary::EvenlyRotatedVectors(const FVector& Forward, const FVector& Axis,
+                                                                float Spread, int32 NumVectors)
+{
+	TArray<FVector> Vectors;
+
+	// 计算扇面左侧边界方向：中心方向绕 Axis 旋转 -Spread/2
+	const FVector LeftOfSpread = Forward.RotateAngleAxis(-Spread / 2.f, Axis);
+	if (NumVectors > 1)
+	{
+		// 计算相邻方向之间的角度间隔（扇面等分）
+		const float DeltaSpread = Spread / (NumVectors - 1);
+		for (int32 i = 0; i < NumVectors; i++)
+		{
+			// 从左边界开始，逐步增加 DeltaSpread，绕 Axis 旋转得到第 i 个方向
+			const FVector Direction = LeftOfSpread.RotateAngleAxis(DeltaSpread * i, FVector::UpVector);
+			Vectors.Add(Direction);
+		}
+	}
+	else
+	{
+		// 只有一个向量时，直接返回 Forward 方向
+		Vectors.Add(Forward);
+	}
+	return Vectors;
+}
+
 int32 UAuraAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* WorldContextObject,
                                                              ECharacterClass CharacterClass, int32 CharacterLevel)
 {
