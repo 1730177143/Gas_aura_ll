@@ -8,6 +8,7 @@
 #include "Interaction/CombatInterface.h"
 #include "AuraCharacterBase.generated.h"
 
+class UDebuffNiagaraComponent;
 class UNiagaraSystem;
 class UGameplayAbility;
 class UAttributeSet;
@@ -33,14 +34,19 @@ public:
 	virtual AActor* GetAvatar_Implementation() override;
 	//只在服务器处理 Die 逻辑
 	virtual void Die() override;
+	virtual FOnDeathSignature& GetOnDeathDelegate() override;
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
 	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
 	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag) override;
 	virtual int32 GetMinionCount_Implementation() override;
 	virtual void IncrementMinionCount_Implementation(int32 Amount) override;
 	virtual ECharacterClass GetCharacterClass_Implementation() override;
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override;
 	/** end Combat Interface */
 
+	FOnASCRegistered OnAscRegistered;
+	FOnDeathSignature OnDeathDelegate;
+	
 	//多播RPC,可靠。在服务器和客户端处理表现
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastHandleDeath();
@@ -123,6 +129,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDebuffNiagaraComponent> BurnDebuffComponent;
 
 private:
 	//一开始需要被赋予的初始能力
