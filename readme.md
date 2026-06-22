@@ -1363,7 +1363,22 @@ Next Steps (后续步骤)
 3. Component中绑定Character死亡的委托。在Character死亡后发送委托。
 4. 在Debuff标签从0变成1的时候激活niagara，死亡和标签变为0的停止激活niagara。
 
+## 击退效果
 
+> Death Impulse
+
+1. 在GA中增加一个关于Death Impulse强度的变量，在GEParams结构体中也增加同样的变量，
+2. 在自定义GEContext中增加Vector变量。
+3. 我们要把Impulse强度和方向存储在GEContext中，在Actor碰撞后，应用GE前，需要传递这些信息，并传递给应用GE的函数 ，在GE中创建Context，并填充信息，
+4. 在AS中如果死亡，则传递一个impulse向量，在死亡处理函数中设置Weapon和Mesh的 Impulse效果。
+
+> Knock Impact
+
+1. 同Death Impulse几乎一模一样。
+2. 注意如果击退效果没有生效可以取消勾选HitResult的跟运动。
+3. 在MakeDamageEffectParamsFromClassDefaults中定义覆盖knockDirection和DeathImpulse的操作。
+
+## 高级GA
 
 # 调试
 
