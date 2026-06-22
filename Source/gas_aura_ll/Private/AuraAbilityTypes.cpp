@@ -14,7 +14,7 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 	//!!!!!!!!!!!!!!!! Warning !!!!!!!!!!!!!!!
 
 	// RepBits：位掩码，用于标记哪些成员变量需要被序列化（节省带宽，只发送有效数据）
-	uint16 RepBits = 0;
+	uint32 RepBits = 0;
 	//通过 IsSaving() / IsLoading() 判断是写入还是读取
 	/*
 	* Ar.IsLoading() 返回 true
@@ -87,10 +87,14 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		{
 			RepBits |= 1 << 13; // 有效时才置位，通知接收端需要读取该字段
 		}
+		if (!DeathImpulse.IsZero())
+        		{
+        			RepBits |= 1 << 14;
+        		}
 	}
 	// 序列化 RepBits 本身，使用 7 位（因为只用到 0~6）
 	// Ar.SerializeBits(&RepBits, 7);
-	Ar.SerializeBits(&RepBits, 14);
+	Ar.SerializeBits(&RepBits, 15);
 
 	// 以下根据 RepBits 的各个位依次读取或写入对应的成员
 
@@ -182,6 +186,10 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		// 调用 FGameplayTag 的自定义网络序列化函数，完成具体数据的读/写
 		DamageType->NetSerialize(Ar, Map, bOutSuccess);
 	}
+	if (RepBits & (1 << 14))
+    	{
+    		DeathImpulse.NetSerialize(Ar, Map, bOutSuccess);
+    	}
 
 	// 无论是否传输了 Instigator 和 EffectCauser，在加载完成后都调用 AddInstigator
 	// 主要目的是初始化 InstigatorAbilitySystemComponent（能力系统组件引用），确保上下文内部状态正确

@@ -33,7 +33,7 @@ public:
 	virtual bool IsDead_Implementation() const override;
 	virtual AActor* GetAvatar_Implementation() override;
 	//只在服务器处理 Die 逻辑
-	virtual void Die() override;
+	virtual void Die(const FVector& DeathImpulse) override;
 	virtual FOnDeathSignature& GetOnDeathDelegate() override;
 	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
 	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
@@ -49,7 +49,7 @@ public:
 	
 	//多播RPC,可靠。在服务器和客户端处理表现
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastHandleDeath();
+	virtual void MulticastHandleDeath(const FVector& DeathImpulse);
 
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
