@@ -150,7 +150,6 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
 			if (CombatInterface)
 			{
-				
 				CombatInterface->Die(UAuraAbilitySystemLibrary::GetDeathImpulse(Props.EffectContextHandle));
 			}
 			SendXPEvent(Props);
@@ -161,6 +160,21 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 			FGameplayTagContainer TagContainer;
 			TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
 			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+
+			const FVector& KnockbackForce = UAuraAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
+			if (!KnockbackForce.IsNearlyZero(1.f))
+			{
+				/*
+				* LaunchCharacter将为角色设置一个待处理的发射速度 (LaunchVelocity)，并在角色的 CharacterMovementComponent 下一次更新时应用这个速度。
+				* 角色会被设置为“falling”（下落）状态，并触发 OnLaunched 事件。这通常用于角色跳跃、被抛出或其他瞬时位移的情况。
+				* LaunchVelocity: 这是一个 FVector 类型的参数，表示施加给角色的速度。这是一个三维向量，决定了角色沿 X、Y、Z 方向的速度。
+				* bXYOverride: 这是一个布尔值参数。如果设置为 true，将替换角色当前的 X 和 Y 方向速度，而不是在现有速度的基础上添加。
+				* 这意味着角色在 X 和 Y 方向上的速度会被直接设置为 LaunchVelocity 中的对应值。
+				* bZOverride: 这是一个布尔值参数。如果设置为 true，将替换角色当前的 Z 方向速度（通常与垂直跳跃有关），而不是在现有速度的基础上添加。
+				* 角色在 Z 方向的速度会被设置为 LaunchVelocity 中的 Z 值。
+				 */
+				Props.TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
+			}
 		}
 		const bool bBlock = UAuraAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
 		const bool bCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);

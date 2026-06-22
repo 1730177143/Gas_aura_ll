@@ -88,13 +88,17 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 			RepBits |= 1 << 13; // 有效时才置位，通知接收端需要读取该字段
 		}
 		if (!DeathImpulse.IsZero())
-        		{
-        			RepBits |= 1 << 14;
-        		}
+		{
+			RepBits |= 1 << 14;
+		}
+		if (!KnockbackForce.IsZero())
+		{
+			RepBits |= 1 << 15;
+		}
 	}
 	// 序列化 RepBits 本身，使用 7 位（因为只用到 0~6）
 	// Ar.SerializeBits(&RepBits, 7);
-	Ar.SerializeBits(&RepBits, 15);
+	Ar.SerializeBits(&RepBits, 16);
 
 	// 以下根据 RepBits 的各个位依次读取或写入对应的成员
 
@@ -187,9 +191,13 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		DamageType->NetSerialize(Ar, Map, bOutSuccess);
 	}
 	if (RepBits & (1 << 14))
-    	{
-    		DeathImpulse.NetSerialize(Ar, Map, bOutSuccess);
-    	}
+	{
+		DeathImpulse.NetSerialize(Ar, Map, bOutSuccess);
+	}
+	if (RepBits & (1 << 15))
+	{
+		KnockbackForce.NetSerialize(Ar, Map, bOutSuccess);
+	}
 
 	// 无论是否传输了 Instigator 和 EffectCauser，在加载完成后都调用 AddInstigator
 	// 主要目的是初始化 InstigatorAbilitySystemComponent（能力系统组件引用），确保上下文内部状态正确
