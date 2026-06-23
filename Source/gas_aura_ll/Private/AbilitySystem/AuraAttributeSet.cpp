@@ -156,11 +156,15 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 		}
 		else
 		{
-			//根据特定标签激活
-			FGameplayTagContainer TagContainer;
-			TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
-			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
-
+			//是否电击中
+			if (Props.TargetCharacter->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(
+				Props.TargetCharacter))
+			{
+				//根据特定标签激活
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			}
 			const FVector& KnockbackForce = UAuraAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
 			if (!KnockbackForce.IsNearlyZero(1.f))
 			{
@@ -274,7 +278,7 @@ void UAuraAttributeSet::Debuff(const FEffectProperties& Props)
 
 	// 3. 向容器中添加标签 (AddTag 会自动将其归类到 Added 标签列表中)
 	TagContainer.AddTag(DebuffTag);
-	
+
 	if (DebuffTag.MatchesTagExact(GameplayTags.Debuff_Stun))
 	{
 		TagContainer.AddTag(GameplayTags.Player_Block_CursorTrace);
