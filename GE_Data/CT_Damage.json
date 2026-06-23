@@ -1,11 +1,33 @@
 [
 	{
 		"Name": "Abilities.FireBolt",
+		"1": 10,
+		"2": 200
+	},
+	{
+		"Name": "Abilities.Melee",
 		"1": 5,
-		"5": 10,
-		"10": 16,
-		"15": 27,
-		"20": 41,
-		"40": 120
+		"2": 7.5,
+		"40": 50
+	},
+	{
+		"Name": "Abilities.Ranged",
+		"1": 7.5,
+		"2": 35
+	},
+	{
+		"Name": "Abilities.Electrocute",
+		"1": 1,
+		"2": 20
+	},
+	{
+		"Name": "Abilities.ArcaneShards",
+		"1": 10,
+		"2": 200
+	},
+	{
+		"Name": "Abilities.FireBlast",
+		"1": 15,
+		"2": 150
 	}
 ]
