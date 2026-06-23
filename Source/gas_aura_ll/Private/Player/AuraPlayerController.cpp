@@ -208,7 +208,9 @@ void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 	{
 		if (ThisActor)
 		{
-			TargetingStatus = ETargetingStatus::TargetingEnemy;
+			TargetingStatus = ThisActor != nullptr
+				                  ? ETargetingStatus::TargetingEnemy
+				                  : ETargetingStatus::TargetingNonEnemy;
 		}
 		else
 		{
@@ -236,8 +238,8 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		const APawn* ControlledPawn = GetPawn();
 		if (FollowTime <= ShortPressThreshold && ControlledPawn)
 		{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
-			
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
+
 			//自动寻路
 			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(
 				this, ControlledPawn->GetActorLocation(), CachedDestination))
