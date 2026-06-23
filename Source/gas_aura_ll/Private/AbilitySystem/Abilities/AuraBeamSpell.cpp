@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Abilities/AuraBeamSpell.h"
 
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -70,4 +71,40 @@ void UAuraBeamSpell::TraceFirstTarget(const FVector& BeamTargetLocation)
 			}
 		}
 	}
+}
+
+/**
+ * 存储光束法术的额外连锁目标（如闪电链的次要目标）
+ * 
+ * 从主目标（MouseHitActor）周围一定半径内获取所有存活的玩家，
+ * 排除施法者和主目标，根据技能等级和最大连锁数限制数量，
+ * 优先选取距离主目标最近的目标，并为它们绑定死亡回调。
+ * 
+ * @param OutAdditionalTargets 输出数组，存放筛选出的额外目标（按距离由近到远）
+ */
+void UAuraBeamSpell::StoreAdditionalTargets(TArray<AActor*>& OutAdditionalTargets)
+{
+	// 需要忽略的 Actor：施法者自己和主目标（避免重复或自伤）
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(GetAvatarActorFromActorInfo());
+	ActorsToIgnore.Add(MouseHitActor);
+
+	// 获取主目标周围存活的玩家
+	TArray<AActor*> OverlappingActors;
+	UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(
+		GetAvatarActorFromActorInfo(),
+		OverlappingActors,
+		ActorsToIgnore,
+		850.f, // 搜索半径
+		MouseHitActor->GetActorLocation()); // 以主目标位置为圆心
+
+	// 计算实际可连锁的额外目标数量：取技能等级-1 和配置的最大目标数之间的较小值
+	int32 NumAdditionalTargets = FMath::Min(GetAbilityLevel() - 1, MaxNumShockTargets);
+
+	// 从候选目标中选取距离主目标最近的 NumAdditionalTargets 个目标
+	UAuraAbilitySystemLibrary::GetClosestTargets(
+		NumAdditionalTargets,
+		OverlappingActors,
+		OutAdditionalTargets,
+		MouseHitActor->GetActorLocation());
 }

@@ -321,30 +321,93 @@ void UAuraAbilitySystemLibrary::SetKnockbackForce(FGameplayEffectContextHandle& 
 }
 
 
+/**
+ * 获取指定球形区域内所有存活玩家角色（Avatar）
+ * 
+ * @param WorldContextObject    提供世界上下文的对象（如技能所有者的 Avatar）
+ * @param OutOverlappingActors  输出数组，存储范围内存活的玩家 Avatar Actor
+ * @param ActorsToIgnore        在重叠检测中需要忽略的 Actor 列表
+ * @param Radius                球形检测半径
+ * @param SphereOrigin          球体中心的世界坐标
+ */
 void UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(const UObject* WorldContextObject,
                                                            TArray<AActor*>& OutOverlappingActors,
                                                            const TArray<AActor*>& ActorsToIgnore, float Radius,
                                                            const FVector& SphereOrigin)
 {
+	// 配置碰撞查询，忽略指定的 Actor
 	FCollisionQueryParams SphereParams;
 	SphereParams.AddIgnoredActors(ActorsToIgnore);
 
+	// 从上下文对象获取世界指针
 	if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject,
 	                                                             EGetWorldErrorMode::LogAndReturnNull))
 	{
 		TArray<FOverlapResult> Overlaps;
+		// 以球体形状进行重叠检测，查询所有动态对象
 		World->OverlapMultiByObjectType(Overlaps, SphereOrigin, FQuat::Identity,
 		                                FCollisionObjectQueryParams(
 			                                FCollisionObjectQueryParams::InitType::AllDynamicObjects),
 		                                FCollisionShape::MakeSphere(Radius), SphereParams);
+		// 筛选实现 CombatInterface 且未死亡的 Actor
 		for (FOverlapResult& Overlap : Overlaps)
 		{
 			if (Overlap.GetActor()->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsDead(
 				Overlap.GetActor()))
 			{
+				// 添加该 Actor 实际控制的 Pawn（Avatar），避免添加控制器或裸 Actor
 				OutOverlappingActors.AddUnique(ICombatInterface::Execute_GetAvatar(Overlap.GetActor()));
 			}
 		}
+	}
+}
+
+/**
+ * 从一组 Actor 中获取距离指定原点最近的若干个目标
+ * 
+ * @param MaxTargets         需要返回的最大目标数量
+ * @param Actors             待筛选的 Actor 数组（不会被修改）
+ * @param OutClosestTargets  输出数组，按距离从近到远排列（最多 MaxTargets 个）
+ * @param Origin             距离计算的参考原点
+ */
+void UAuraAbilitySystemLibrary::GetClosestTargets(int32 MaxTargets, const TArray<AActor*>& Actors,
+                                                  TArray<AActor*>& OutClosestTargets, const FVector& Origin)
+{
+	// 如果总数量未超过最大数量，直接返回全部
+	if (Actors.Num() <= MaxTargets)
+	{
+		OutClosestTargets = Actors;
+		return;
+	}
+
+	// 复制一份用于逐步移除已选中的目标
+	TArray<AActor*> ActorsToCheck = Actors;
+	int32 NumTargetsFound = 0;
+
+	// 循环直到找到所需数量的最近目标或所有候选都已检查
+	while (NumTargetsFound < MaxTargets)
+	{
+		if (ActorsToCheck.Num() == 0) break; // 没有更多候选则提前结束
+
+		double ClosestDistance = TNumericLimits<double>::Max();
+		AActor* ClosestActor = nullptr;
+
+		// 遍历剩余候选，找到距离原点最近的一个
+		for (AActor* PotentialTarget : ActorsToCheck)
+		{
+			const double Distance = (PotentialTarget->GetActorLocation() - Origin).Length();
+			if (Distance < ClosestDistance)
+			{
+				ClosestDistance = Distance;
+				ClosestActor = PotentialTarget;
+			}
+		}
+
+		// 从候选列表中移除已选中的最近目标，避免重复选取
+		ActorsToCheck.Remove(ClosestActor);
+		// 添加到输出数组（AddUnique 确保不会重复，即使逻辑上不可能也应防御）
+		OutClosestTargets.AddUnique(ClosestActor);
+		++NumTargetsFound;
 	}
 }
 
