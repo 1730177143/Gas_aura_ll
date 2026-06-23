@@ -41,12 +41,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 
-	UFUNCTION(BlueprintCallable)
-	void ShowMagicCircle(UMaterialInterface* DecalMaterial = nullptr);
-
-	UFUNCTION(BlueprintCallable)
-	void HideMagicCircle();
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -59,10 +53,10 @@ private:
 	TObjectPtr<UInputAction> MoveAction;
 
 	void Move(const FInputActionValue& InputActionValue);
-	
+
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> ShiftAction;
-	
+
 	void ShiftPressed() { bShiftKeyDown = true; };
 	void ShiftReleased() { bShiftKeyDown = false; };
 	bool bShiftKeyDown = false;
@@ -109,12 +103,5 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AMagicCircle> MagicCircleClass;
-
-	UPROPERTY()
-	TObjectPtr<AMagicCircle> MagicCircle;
-
-	void UpdateMagicCircleLocation();
+	
 };

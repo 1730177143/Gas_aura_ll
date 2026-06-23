@@ -12,7 +12,6 @@
 #include "NiagaraFunctionLibrary.h"
 #include " Input/AuraInputComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
-#include "Chaos/ChaosPerfTest.h"
 #include "Components/SplineComponent.h"
 #include "GameFramework/Character.h"
 #include "Interaction/EnemyInterface.h"
@@ -33,27 +32,9 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 	AutoRun();
 }
 
-void AAuraPlayerController::ShowMagicCircle(UMaterialInterface* DecalMaterial)
-{
-	if (!IsValid(MagicCircle))
-	{
-		MagicCircle = GetWorld()->SpawnActor<AMagicCircle>(MagicCircleClass);
-		if (DecalMaterial)
-		{
-			MagicCircle->MagicCircleDecal->SetMaterial(0, DecalMaterial);
-		}
-	}
-}
 
-void AAuraPlayerController::HideMagicCircle()
-{
-	if (IsValid(MagicCircle))
-	{
-		MagicCircle->Destroy();
-	}
-}
-
-void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
+void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter,
+                                                            bool bBlockedHit, bool bCriticalHit)
 {
 	//IsValid 会额外检查是否待销毁
 	//IsLocalController 检查是否本地控制器， 避免服务器端和客户端都调用显示伤害数字
@@ -66,7 +47,7 @@ void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, 
 		                              FAttachmentTransformRules::KeepRelativeTransform);
 		//创建后分离，执行动画
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(DamageAmount, bBlockedHit,  bCriticalHit);
+		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
 	}
 }
 
@@ -208,13 +189,6 @@ void AAuraPlayerController::AutoRun()
 	}
 }
 
-void AAuraPlayerController::UpdateMagicCircleLocation()
-{
-	if (IsValid(MagicCircle))
-	{
-		MagicCircle->SetActorLocation(CursorHit.ImpactPoint);
-	}
-}
 
 void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
