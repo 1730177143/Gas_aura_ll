@@ -1380,6 +1380,34 @@ Next Steps (后续步骤)
 
 ## 高级GA
 
+> ElectricBeam
+
+1. 在AuraCharacter蓝图中增加一个变量bShockLoop，在ABP蓝图中每一帧都获取这个变量，根据这个变量转换Idle和ShockLoop动画状态。
+2. 在接口声明一个蓝图实现函数来设置bShockLoop。
+3. 在GA蓝图设置GA启动的逻辑。某些变量声明在C++中，调用C++中的函数来设置这些变量。
+4. 在按下鼠标后，调用此GA，同时禁用PlayerController的某功能。在GA中设置一些标签，在GA激活后给ASC添加这些标签，在PlayerCOntroller检测这些标签并禁用某些功能。
+5. 使用Gameplay Cue处理声音,需要重写On Execute函数。添加一个Gameplay Cue Tag。
+6. 在GA中根据Tag执行GameplayCue。执行GameplayCue需要遍历整个项目文件，因此我们可以 吧GameplayCue存放在某个文件夹，然后在DefaultGame.ini配置GameplayCue的遍历文件夹。
+7. 我们可以在DefaultEngine.ini中配置最大每次更新的最大PRC数量。每个gameplayCue会占用一个，如果GameplayCue太多，则需要多次更新才能同步。
+8. 创建一个单独的trace通道
+
+`DefaultGame.ini`
+
+```ini
+[/Script/GameplayAbilities.AbilitySystemGlobals]
++AbilitySystemGlobalsClassName=/Script/gas_aura_ll.AuraAbilitySystemGlobals
++GameplayCueNotifyPaths=/Game/Blueprints/AbilitySystem/GameplayCueNotifies
+```
+
+`DefaultEngine.ini`
+
+```ini
+[ConsoleVariables]
+net.MaxRPCPerNetUpdate=10
+```
+
+
+
 # 调试
 
 ### 自定义日志
