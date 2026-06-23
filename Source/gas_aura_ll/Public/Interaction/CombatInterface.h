@@ -68,6 +68,7 @@ public:
 	AActor* GetAvatar();
 
 	virtual void Die(const FVector& DeathImpulse) = 0;
+	// & 返回实际引用
 	virtual FOnDeathSignature& GetOnDeathDelegate() = 0;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
