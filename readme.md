@@ -1406,7 +1406,73 @@ Next Steps (后续步骤)
 net.MaxRPCPerNetUpdate=10
 ```
 
+> Gameplay Cue Actor
 
+1. 需要仔细检查是否自动摧毁。
+2. 在蓝图中使用AddGameplayCueOnActor(Looping)使用该Cue。
+3. 在Gameplay Cue中获取武器component，然后吧Niagram Systen component附加在武器的顶端，设置末端为mouse hit result location。在GameplayCue的remove函数中销毁NiagramSystemComponent。
+4. 声音同理
+
+
+
+> 第一个追踪到的敌人
+
+1. c++实现，GA蓝图中调用
+
+
+
+> 寻找第一个击中敌人周围的 敌人
+
+1. c++实现寻找周围敌人 的 方法。GA蓝图调用。
+2. 对于每个周围的敌人，都增加新的GameplayCue，并保存一个Actor - Gameplay Cue Params的Map，以便在GA结束的时候移除GameplayCue.
+3. 在主目标死亡后应用cool down
+
+
+
+> 伤害相关
+
+1. 配置好CooldownGE和CostGE
+2. 生成Beam后，设置一个Timer，频率为伤害频率，在Timer的回调事件中提交GACost，如果提交成功，则应用GE。
+3. 在GA中创建一个应用伤害的函数，在蓝图中创建context Spec应用伤害。关于Debuff的处理，只在最后一次应用伤害的时候判定。
+4. =====如果著目标死亡的时候取消GA，如果副目标死亡，则取消应用在他身上的伤害。=====
+5. 在C++中创建一个死亡后广播的委托。在BaseCharacter的MultiCastHandleDeath中广播该委托。
+6. 在BeamSpell中创建两个蓝图实现的函数，并绑定主目标和副目标的死亡委托
+7. 在主目标死亡后移除GameplayCue，并且清空Timer，提交冷却，结束GA。
+8. 在副目标死亡后移除自身的GameplayCue，并移除AdditonalActorToCueParams中的数据以免后续继续应用伤害。
+9. 最小施法时间，在鼠标释放结束后判定按下时间是否小于最小施法时间，如果小才会结束，否则延迟
+
+
+
+> FireBolt修改Bug
+
+在使用追踪功能后，如果敌方已经死了 ，则已经发射出去的火球会一致停留在角色死亡的位置。解决办法是在火球的低频率tick函数中判断移动距离是否小于临界值，如果小则销毁该火球。
+
+GA中阻止所有的Ga标签
+
+> 触电debuff
+
+1. 在松开按键的时候，额外应用一次伤害，应用伤害 时候使用C++的函数，以便判定Debuff。
+2. 在Debuff判定成功后，会给Character添加一个标签，绑定这个标签的变化事件，修改Character中的可复制变量bIsStunned，在动画蓝图中获取这个变量，并根据这个变量判断是否播放Stun动画。
+
+> Firebolt
+
+1. 需要设置为Replicated并且Movement也要设置Replicate
+
+> Debuff 效果实现
+
+1. 在角色基类中增肌一个DebuffNiagaraComponent，在构造函数中创建这个组件的默认子对象。并在子角色类的蓝图中配置这个DebuffNiagaraComponent的粒子效果。
+2. DebuffNiagaraComponent是UNiagaraComponent的子类。在构造函数中取消AutoActivate。在BeginPlay函数中，获取所有者的AC，并绑定一个DebuffTag移除和增加的委托，在该委托的回调函数中判断所有者是否是有效的，所有者是否还活着，如果还活着且有效，并且是增加DebuffTag，则激活粒子效果，否则关闭粒子效果。为了避免获取不到所有者的ASC，在beginPlay中绑定所有者ASC注册好的委托，用WeakLambda绑定，在该Lambda中绑定一个DebuffTag移除和增加的委托。
+3. 在角色基类的multicast_Death相关函数（处理死亡的函数客户端和服务端都会被调用）中取消激活粒子效果。
+4. 如果主角的效果不会跨客户端显示，则可以在OnRep_Stunned()函数中手动调用
+
+
+
+> 播放Shock动画
+
+1. 在角色基类中增加一个变量表示敌方是否被麻痹，在接口中声明该变量的GetSet方法，蓝图原生方法，蓝图可调用，在角色基类中重写Get和Set方法。
+2. 修改AS中的受击逻辑，如果受击并且没有被麻痹，才会尝试激活受击GE。
+3. 在敌人的动画蓝图基类中，每一帧获取是否被电击的变量，如果是转移到被点击的状态。
+4. 在GA能力蓝图中的SpawnElectrocute函数中，判断第一个击中目标实现了CombatInterface后，设置第一个目标的被电击变量。紧接着在获取到周围的5个Actor时，分别设置这些Actor的被电击变量。在PrepareToEndAbility函数中的移除Cue之前设置被电击变量为false。
 
 # 调试
 

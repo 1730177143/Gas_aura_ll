@@ -274,7 +274,14 @@ void UAuraAttributeSet::Debuff(const FEffectProperties& Props)
 
 	// 3. 向容器中添加标签 (AddTag 会自动将其归类到 Added 标签列表中)
 	TagContainer.AddTag(DebuffTag);
-
+	
+	if (DebuffTag.MatchesTagExact(GameplayTags.Debuff_Stun))
+	{
+		TagContainer.AddTag(GameplayTags.Player_Block_CursorTrace);
+		TagContainer.AddTag(GameplayTags.Player_Block_InputHeld);
+		TagContainer.AddTag(GameplayTags.Player_Block_InputPressed);
+		TagContainer.AddTag(GameplayTags.Player_Block_InputReleased);
+	}
 
 	// 4. 将配置好的容器标签应用到组件上
 	TargetTagsComponent.SetAndApplyTargetTagChanges(TagContainer);
