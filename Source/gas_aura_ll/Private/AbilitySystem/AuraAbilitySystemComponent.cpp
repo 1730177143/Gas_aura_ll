@@ -63,8 +63,19 @@ void UAuraAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Inp
 		AbilitySpecInputPressed(AbilitySpec);
 		if (AbilitySpec.IsActive())
 		{
-			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle,
-			                      AbilitySpec.ActivationInfo.GetActivationPredictionKey());
+			PRAGMA_DISABLE_DEPRECATION_WARNINGS
+			const UGameplayAbility* Instance = AbilitySpec.GetPrimaryInstance();
+			FPredictionKey OriginalPredictionKey = Instance
+				                                       ? Instance->GetCurrentActivationInfo().
+				                                                   GetActivationPredictionKey()
+				                                       : AbilitySpec.ActivationInfo.GetActivationPredictionKey();
+
+			PRAGMA_ENABLE_DEPRECATION_WARNINGS
+			InvokeReplicatedEvent(
+				EAbilityGenericReplicatedEvent::InputPressed,
+				AbilitySpec.Handle,
+				OriginalPredictionKey
+			);
 		}
 	}
 }
