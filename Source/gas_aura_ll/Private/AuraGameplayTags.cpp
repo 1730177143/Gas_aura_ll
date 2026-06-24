@@ -283,6 +283,10 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 		FString("Electrocute Ability Tag")
 	);
 
+	GameplayTags.Abilities_Arcane_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Arcane.ArcaneShards"),
+		FString("Arcane Shards Ability Tag")
+	);
 	/*
 	 * Passive Spells
 	 */
@@ -356,7 +360,12 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 
 	GameplayTags.Cooldown_Lightning_Electrocute = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Cooldown.Lightning.Electrocute"),
-		FString("Lightning Electrocute; Cooldown Tag")
+		FString("Lightning Electrocute Cooldown Tag")
+	);
+
+	GameplayTags.Cooldown_Arcane_ArcaneShards = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Cooldown.Arcane.ArcaneShards"),
+		FString("Arcane Shards Cooldown Tag")
 	);
 
 	/*
