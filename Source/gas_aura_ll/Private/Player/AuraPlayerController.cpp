@@ -12,8 +12,11 @@
 #include "NiagaraFunctionLibrary.h"
 #include " Input/AuraInputComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Actor/MagicCircle.h"
+#include "Components/DecalComponent.h"
 #include "Components/SplineComponent.h"
 #include "GameFramework/Character.h"
+#include "gas_aura_ll/gas_aura_ll.h"
 #include "Interaction/EnemyInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
 
@@ -30,8 +33,40 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 
 	CursorTrace();
 	AutoRun();
+	// 更新魔法阵位置
+	UpdateMagicCircleLocation();
 }
 
+/**
+ * 显示魔法阵（光标指示器）
+ * 如果当前没有魔法阵实例，则生成一个并设置其贴花材质
+ * 
+ * @param DecalMaterial 用于魔法阵贴花的材质接口（可为 nullptr）
+ */
+void AAuraPlayerController::ShowMagicCircle(UMaterialInterface* DecalMaterial)
+{
+	if (!IsValid(MagicCircle))
+	{
+		MagicCircle = GetWorld()->SpawnActor<AMagicCircle>(MagicCircleClass);
+		if (DecalMaterial)
+		{
+			// 设置魔法阵贴花的材质（例如用于不同技能类型显示不同图案）
+			MagicCircle->MagicCircleDecal->SetMaterial(0, DecalMaterial);
+		}
+	}
+}
+
+/**
+ * 隐藏魔法阵
+ * 直接销毁已存在的魔法阵实例
+ */
+void AAuraPlayerController::HideMagicCircle()
+{
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->Destroy();
+	}
+}
 
 void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter,
                                                             bool bBlockedHit, bool bCriticalHit)
@@ -127,8 +162,15 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 	}
 }
 
+/**
+ * 每帧执行的鼠标悬停追踪
+ * - 检测鼠标下是否有 Actor
+ * - 处理高亮/取消高亮
+ * - 当存在阻止光标追踪的标签时（如打开技能菜单），清除所有高亮并跳过
+ */
 void AAuraPlayerController::CursorTrace()
 {
+	// 如果 ASC 存在且含有阻止光标追踪的标签，则取消所有高亮并直接返回
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_CursorTrace))
 	{
 		if (LastActor) LastActor->UnHighlightActor();
@@ -138,12 +180,16 @@ void AAuraPlayerController::CursorTrace()
 		ThisActor = nullptr;
 		return;
 	}
-	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	// 根据魔法阵是否存在选择不同的追踪通道：存在时排除玩家，以免魔法阵遮挡玩家
+	const ECollisionChannel TraceChannel = IsValid(MagicCircle) ? ECC_ExcludePlayers : ECC_Visibility;
+	GetHitResultUnderCursor(TraceChannel, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
 
+	// 更新上一帧和当前帧的悬停 Actor
 	LastActor = ThisActor;
 	ThisActor = CursorHit.GetActor();
 
+	// 若 Actor 发生变化，取消旧的高亮，添加新的高亮
 	if (LastActor != ThisActor)
 	{
 		if (LastActor)
@@ -186,6 +232,18 @@ void AAuraPlayerController::AutoRun()
 		{
 			bAutoRunning = false;
 		}
+	}
+}
+
+/**
+ * 更新魔法阵位置
+ * 将魔法阵移动到光标命中点（地面位置）
+ */
+void AAuraPlayerController::UpdateMagicCircleLocation()
+{
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->SetActorLocation(CursorHit.ImpactPoint);
 	}
 }
 

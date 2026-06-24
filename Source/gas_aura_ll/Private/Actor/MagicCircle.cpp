@@ -1,4 +1,4 @@
-范围魔法// gas_aura_ll
+// gas_aura_ll
 
 
 #include "Actor/MagicCircle.h"
