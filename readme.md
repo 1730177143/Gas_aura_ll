@@ -1474,6 +1474,43 @@ GA中阻止所有的Ga标签
 3. 在敌人的动画蓝图基类中，每一帧获取是否被电击的变量，如果是转移到被点击的状态。
 4. 在GA能力蓝图中的SpawnElectrocute函数中，判断第一个击中目标实现了CombatInterface后，设置第一个目标的被电击变量。紧接着在获取到周围的5个Actor时，分别设置这些Actor的被电击变量。在PrepareToEndAbility函数中的移除Cue之前设置被电击变量为false。
 
+## 被动能力
+
+被动技能只要装配在技能槽中，就一直触发；技能同步为服务器开启，客户端也运算。
+
+因此主要开启与关闭技能的逻辑是在技能装配时发生
+
++ 如果装备的插槽不是空的，则需要先清除之前的技能，如果清除的技能是被动技能，则停止技能
++ 如果装备的被动技能之前的插槽是空的，说明该技能没有处于激活状态，需要进行激活
++ 同时在此技能槽更改时，启停粒子效果
+
+---
+
+> 初始化被动能力，使其可以融入到现有的UI交互逻辑。
+
+1. 创建一个新的被动能力类的基类AuraPassiveAbility，该类继承我们自己的AuraGameplayAbility。
+2. 在ASC中声明一个Deactivate的委托，在PassiveAbility类中重写ActivateAbility方法，在该方法中绑定ASC中的Deactivate委托。在委托的回调函数中根据PassiveTag结束当前激活的GA。
+3. 创建三个被动能力的蓝图，并填充Ability_Info资产。我们升级的时候会遍历该资产根据解锁等级解锁对应的GA并赋予ASC，然后广播解锁技能的AbilityInformation。
+4. 在被动能力树中设置不同Widget的Ability Tag。在Widget中已经绑定的AbilityInfo的委托回调，根据Widget自身的Ability Tag显示对应的能力信息。
+5. 技能菜单的技能槽中为不同的Widget设置不同的InputTag，这样在装备被动技能后就可以正确显示在技能槽中。
+6. 在Overlay的HealthManaSpellWidget中对所有的Subwidget设置Controller和inputTag。
+
+
+
+> 被动技能激活时机
+
+1. 被动技能的执行策略是server initiated.
+2. 被动技能在装备到技能槽后自动激活，在ASC中的服务端RPC中处理这个逻辑。点击技能槽后会调用controller的函数，在该函数中会 调用ASC的服务端RPC函数处理技能装备逻辑。在技能装备函数中需要考虑到该技能槽是否已装备了技能。同时处理前后技能的状态（已解锁--已装备）
+
+
+
+> 被动技能装备的 Niagara粒子效果
+
+1. 创建一个 UPassiveNiagaraComponent类，在该类的BeginPlayer中绑定ASC中的Passive激活相关的委托，绑定的方法同DebuffNiagaraSystem一致。
+2. 在绑定的回调函数中，根据Tag判断是哪一个Passive，然后处理激活和取消激活逻辑。
+3. 在ASC中定义一个NetMulticast函数广播Passive激活相关的委托。在ASC中的ServerEquipAbility函数的合适时机调用NetMulticast函数。
+4. 在Character中创建三个这样的PassiveNiagaraSystem组件 。把该组件添加到ScentComponent组件上，并启用Tick，设置ScentComponent的旋转向量为0。
+
 # 调试
 
 ### 自定义日志

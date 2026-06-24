@@ -190,26 +190,42 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 	}
 }
 
+/**
+ * 处理获取经验值（XP）的逻辑
+ * 
+ * 从 IncomingXP 属性中读取待应用的经验值，将其加到来源角色身上。
+ * 若来源角色实现了 PlayerInterface 和 CombatInterface，则进一步判断是否升级，
+ * 并计算升级所获得的属性点和技能点奖励，同时设置满血/满蓝标志并触发升级事件。
+ * 
+ * @param Props 效果属性结构体，包含效果来源和目标的信息。此处主要使用 SourceCharacter。
+ */
 void UAuraAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 {
+	// 获取并清零 IncomingXP 属性，避免重复处理
 	const float LocalIncomingXP = GetIncomingXP();
 	SetIncomingXP(0.f);
-	// Source Character is the owner, since GA_ListenForEvents applies GE_EventBasedEffect, adding to IncomingXP
+
+	// 确认来源角色同时实现了玩家接口和战斗接口
 	if (Props.SourceCharacter->Implements<UPlayerInterface>() && Props.SourceCharacter->Implements<UCombatInterface>())
 	{
+		// 获取当前等级和当前经验值
 		const int32 CurrentLevel = ICombatInterface::Execute_GetPlayerLevel(Props.SourceCharacter);
 		const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceCharacter);
 
+		// 计算增加经验后的新等级
 		const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(
 			Props.SourceCharacter, CurrentXP + LocalIncomingXP);
 		const int32 NumLevelUps = NewLevel - CurrentLevel;
+
 		if (NumLevelUps > 0)
 		{
+			// 提升等级
 			IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumLevelUps);
 
 			int32 AttributePointsReward = 0;
 			int32 SpellPointsReward = 0;
 
+			// 累加每一级提升所获得的属性点和技能点奖励
 			for (int32 i = 0; i < NumLevelUps; ++i)
 			{
 				SpellPointsReward += IPlayerInterface::Execute_GetSpellPointsReward(
@@ -218,14 +234,19 @@ void UAuraAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 					Props.SourceCharacter, CurrentLevel + i);
 			}
 
+			// 发放属性点和技能点
 			IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
 			IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
 
+			// 升级后自动回满生命值和法力值
 			bTopOffHealth = true;
 			bTopOffMana = true;
 
+			// 触发升级事件（播放特效/音效等）
 			IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
 		}
+
+		// 最终将经验值加到玩家身上
 		IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
 	}
 }

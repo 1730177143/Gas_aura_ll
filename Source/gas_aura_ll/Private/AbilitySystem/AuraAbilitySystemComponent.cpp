@@ -223,11 +223,19 @@ bool UAuraAbilitySystemComponent::AbilityHasAnySlot(const FGameplayAbilitySpec& 
 	return Spec.GetDynamicSpecSourceTags().HasTag(FGameplayTag::RequestGameplayTag(FName("InputTag")));
 }
 
+/**
+ * 查找占用指定槽位（Slot）的 AbilitySpec
+ * 
+ * @param Slot 槽位标签，如 "InputTag.1"
+ * @return 匹配槽位的 FGameplayAbilitySpec 指针，未找到则返回 nullptr
+ */
 FGameplayAbilitySpec* UAuraAbilitySystemComponent::GetSpecWithSlot(const FGameplayTag& Slot)
 {
+	// 锁定当前可激活技能列表，确保遍历期间列表不被修改
 	FScopedAbilityListLock ActiveScopeLock(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
+		// 使用 GetDynamicSpecSourceTags 检查是否包含指定槽位标签
 		if (AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(Slot))
 		{
 			return &AbilitySpec;
@@ -236,12 +244,22 @@ FGameplayAbilitySpec* UAuraAbilitySystemComponent::GetSpecWithSlot(const FGamepl
 	return nullptr;
 }
 
+/**
+ * 判断给定的 AbilitySpec 是否为被动技能
+ * 
+ * @param Spec 技能规格引用
+ * @return 如果技能类型标签为被动类型，则返回 true
+ */
 bool UAuraAbilitySystemComponent::IsPassiveAbility(const FGameplayAbilitySpec& Spec) const
 {
+	// 获取技能信息数据资产
 	const UAbilityInfo* AbilityInfo = UAuraAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	// 从 Spec 中提取技能标签
 	const FGameplayTag AbilityTag = GetAbilityTagFromSpec(Spec);
+	// 查找对应技能的信息
 	const FAuraAbilityInfo& Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
 	const FGameplayTag AbilityType = Info.AbilityType;
+	// 检查技能类型是否与全局被动标签精确匹配
 	return AbilityType.MatchesTagExact(FAuraGameplayTags::Get().Abilities_Type_Passive);
 }
 
@@ -249,6 +267,12 @@ void UAuraAbilitySystemComponent::AssignSlotToAbility(FGameplayAbilitySpec& Spec
 {
 	ClearSlot(&Spec);
 	Spec.GetDynamicSpecSourceTags().AddTag(Slot);
+}
+
+void UAuraAbilitySystemComponent::MulticastActivatePassiveEffect_Implementation(const FGameplayTag& AbilityTag,
+	bool bActivate)
+{
+	ActivatePassiveEffect.Broadcast(AbilityTag, bActivate);
 }
 
 //检查是否拥有指定 AbilityTag 的能力 ，没有返回空指针 nullptr
@@ -370,9 +394,9 @@ void UAuraAbilitySystemComponent::ServerEquipAbility(const FGameplayTag& Ability
 					if (IsPassiveAbility(*SpecWithSlot))
 					{
 						// 多播停用被动效果（参数 false 表示关闭）
-						// MulticastActivatePassiveEffect(GetAbilityTagFromSpec(*SpecWithSlot), false);
-						// // 广播被动技能被替换/停用的事件
-						// DeactivatePassiveAbility.Broadcast(GetAbilityTagFromSpec(*SpecWithSlot));
+						MulticastActivatePassiveEffect(GetAbilityTagFromSpec(*SpecWithSlot), false);
+						// 广播被动技能被替换/停用的事件
+						DeactivatePassiveAbility.Broadcast(GetAbilityTagFromSpec(*SpecWithSlot));
 					}
 
 					// 清除该技能的槽位绑定，使其不再占用此槽
@@ -388,7 +412,7 @@ void UAuraAbilitySystemComponent::ServerEquipAbility(const FGameplayTag& Ability
 					// 尝试激活技能（会触发其被动效果）
 					TryActivateAbility(AbilitySpec->Handle);
 					// 多播通知所有客户端激活该被动效果
-					// MulticastActivatePassiveEffect(AbilityTag, true);
+					MulticastActivatePassiveEffect(AbilityTag, true);
 				}
 				// 移除技能身上的旧状态标签（如“已解锁”） 添加“已装备”状态标签
 				AbilitySpec->GetDynamicSpecSourceTags().RemoveTag(GetStatusFromSpec(*AbilitySpec));
