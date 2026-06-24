@@ -95,10 +95,27 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 		{
 			RepBits |= 1 << 15;
 		}
+		if (bIsRadialDamage)
+		{
+			RepBits |= 1 << 16;
+
+			if (RadialDamageInnerRadius > 0.f)
+			{
+				RepBits |= 1 << 17;
+			}
+			if (RadialDamageOuterRadius > 0.f)
+			{
+				RepBits |= 1 << 18;
+			}
+			if (!RadialDamageOrigin.IsZero())
+			{
+				RepBits |= 1 << 19;
+			}
+		}
 	}
 	// 序列化 RepBits 本身，使用 7 位（因为只用到 0~6）
 	// Ar.SerializeBits(&RepBits, 7);
-	Ar.SerializeBits(&RepBits, 16);
+	Ar.SerializeBits(&RepBits, 20);
 
 	// 以下根据 RepBits 的各个位依次读取或写入对应的成员
 
@@ -197,6 +214,23 @@ bool FAuraGameplayEffectContext::NetSerialize(FArchive& Ar, UPackageMap* Map, bo
 	if (RepBits & (1 << 15))
 	{
 		KnockbackForce.NetSerialize(Ar, Map, bOutSuccess);
+	}
+	if (RepBits & (1 << 16))
+	{
+		Ar << bIsRadialDamage;
+
+		if (RepBits & (1 << 17))
+		{
+			Ar << RadialDamageInnerRadius;
+		}
+		if (RepBits & (1 << 18))
+		{
+			Ar << RadialDamageOuterRadius;
+		}
+		if (RepBits & (1 << 19))
+		{
+			RadialDamageOrigin.NetSerialize(Ar, Map, bOutSuccess);
+		}
 	}
 
 	// 无论是否传输了 Instigator 和 EffectCauser，在加载完成后都调用 AddInstigator

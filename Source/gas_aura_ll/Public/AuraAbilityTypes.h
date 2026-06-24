@@ -61,6 +61,22 @@ struct FDamageEffectParams
 
 	UPROPERTY(BlueprintReadWrite)
 	FVector KnockbackForce = FVector::ZeroVector;
+
+	//当前伤害类型是否为范围伤害
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsRadialDamage = false;
+
+	//内半径：在此半径内的所有目标都将受到完整的伤害
+	UPROPERTY(BlueprintReadWrite)
+	float RadialDamageInnerRadius = 0.f;
+
+	//外半径：超过这个距离的目标受到最小伤害，最小伤害如果设置为0，则圈外不受到伤害
+	UPROPERTY(BlueprintReadWrite)
+	float RadialDamageOuterRadius = 0.f;
+
+	//伤害源的中心点
+	UPROPERTY(BlueprintReadWrite)
+	FVector RadialDamageOrigin = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)
@@ -79,6 +95,10 @@ public:
 	TSharedPtr<FGameplayTag> GetDamageType() const { return DamageType; }
 	FVector GetDeathImpulse() const { return DeathImpulse; }
 	FVector GetKnockbackForce() const { return KnockbackForce; }
+	bool IsRadialDamage() const { return bIsRadialDamage; }
+	float GetRadialDamageInnerRadius() const { return RadialDamageInnerRadius; }
+	float GetRadialDamageOuterRadius() const { return RadialDamageOuterRadius; }
+	FVector GetRadialDamageOrigin() const { return RadialDamageOrigin; }
 
 	//setter 函数
 	void SetIsCriticalHit(bool bInIsCriticalHit) { bIsCriticalHit = bInIsCriticalHit; }
@@ -90,6 +110,19 @@ public:
 	void SetDamageType(TSharedPtr<FGameplayTag> InDamageType) { DamageType = InDamageType; }
 	void SetDeathImpulse(const FVector& InImpulse) { DeathImpulse = InImpulse; }
 	void SetKnockbackForce(const FVector& InForce) { KnockbackForce = InForce; }
+	void SetIsRadialDamage(bool bInIsRadialDamage) { bIsRadialDamage = bInIsRadialDamage; }
+
+	void SetRadialDamageInnerRadius(float InRadialDamageInnerRadius)
+	{
+		RadialDamageInnerRadius = InRadialDamageInnerRadius;
+	}
+
+	void SetRadialDamageOuterRadius(float InRadialDamageOuterRadius)
+	{
+		RadialDamageOuterRadius = InRadialDamageOuterRadius;
+	}
+
+	void SetRadialDamageOrigin(const FVector& InRadialDamageOrigin) { RadialDamageOrigin = InRadialDamageOrigin; }
 
 	/** Returns the actual struct used for serialization, subclasses must override this! */
 	//返回用于序列化的实际结构，子类必须重写此！
@@ -142,6 +175,18 @@ protected:
 
 	UPROPERTY()
 	FVector KnockbackForce = FVector::ZeroVector;
+
+	UPROPERTY()
+	bool bIsRadialDamage = false;
+
+	UPROPERTY()
+	float RadialDamageInnerRadius = 0.f;
+
+	UPROPERTY()
+	float RadialDamageOuterRadius = 0.f;
+
+	UPROPERTY()
+	FVector RadialDamageOrigin = FVector::ZeroVector;
 };
 
 /*
