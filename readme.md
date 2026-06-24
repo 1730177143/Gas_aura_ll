@@ -1511,6 +1511,77 @@ GA中阻止所有的Ga标签
 3. 在ASC中定义一个NetMulticast函数广播Passive激活相关的委托。在ASC中的ServerEquipAbility函数的合适时机调用NetMulticast函数。
 4. 在Character中创建三个这样的PassiveNiagaraSystem组件 。把该组件添加到ScentComponent组件上，并启用Tick，设置ScentComponent的旋转向量为0。
 
+## AOE技能
+
+元素水晶从地面生成，以生成点为中心，造成径向伤害
+
+**法阵指示物 AMagicCircle：**
+
++ 透贴材质，跟随鼠标移动
++ 于 <font style="background-color:#EFF0F0;">AuraPlayerController</font> 中添加与销毁
+
+**生成点位 APointCollection：**
+
++ 生成点位是提前设置好相对位置的Actor
++ 能够根据输入参数进行旋转，获取点位到地面的投影位置
+
+**技能触发：**
+
++ 第一次触发技能生成法阵指示物，标识生成区域
++ 第二次触发释放技能，使用Timer进行异步生成水晶
++ 在水晶生成的位置添加径向伤害，已在 <font style="background-color:#EFF0F0;">AuraDamageGameplayAbility</font> 中添加径向伤害相关的属性
++ 如果开启了径向伤害，击退逻辑已经改为根据径向原点计算，伤害径向化在 <font style="background-color:#EFF0F0;">UExecCalc_Damage</font> 计算每项伤害时进行
++ **径向原点必须在GA生成伤害参数( ****<font style="background-color:#FBF5CB;">MakeDamageEffectParamsFromClassDefaults </font>****)之前调用！！！**
+
+---
+
+**GameplayCueNotify_Static**适用于简单的、不需要复杂逻辑的 单次效果
+**GameplayCueNotify_Burst** 是 GameplayCueNotify_Static 的一个增强版本，用于 瞬时的“爆发式”效果，并且支持更多的细节配置。
+**GameplayCueNotify_HitImpact** 专门用于处理 击中（Hit）事件 的效果。它通常用来处理攻击命中目标后的反馈，如产生火花、击退、流血等效果。
+
+---
+
+> 生成魔法圈，显示，隐藏和跟随鼠标。【PlayerController--MagicCircle】
+
+1. 自定义一个MagicCircleActor，配置一个UDecalComponent组件，在蓝图中配置UDecalComponent的Material。并修改朝向【打到墙上还是打到地面】。在Tick的时候修改X旋转变量实现旋转效果。
+2. 我们把MagicCircleActor保存在PlayerController中，任何与MagicCircleActor相关的操作都需要调用PC的函数。然后再包装一层，通过PlayerInterface中的函数来访问PlayerController中的函数。最后在AuraCharacter中实现PlayerInterface的接口。
+3. 在PlayerController中增加一个MagicCircleActor Class，和一个MagicCircleActor指针。增加显示和隐藏函数（蓝图可调用），在显示函数中生成Actor并根据传递的Material更新Actor的Material。在隐藏函数中销毁Actor。
+4. 为了解决当鼠标移动到敌人身上时，MagicCircle会突然移动，我们自定义一个新的碰撞通道，角色，敌人的Capsule，Mesh，Weapon会忽略这个通道。在MyAura.h中声明这个自定义通道的名字。在Player的CUrsorTrace函数中，在进行光标追踪之前，如果MagicCircle是合法的则使用自定义通道，否则使用Visible通道。注意需要确保空气墙忽略这些和技能相关的自定义通道。
+
+> Shard技能配置
+
+1. 同前面一致不再赘述
+2. SpellDirection
+   1. 为该技能创建一个单独的类，填充对应的Description
+
+> Shard 技能特效和伤害逻辑
+
+1. 能力激活显示MagicCircle，直接调用PlayerInterface中的函数即可（蓝图 原生事件，蓝图可调用函数）。之后等待激发该GA的按键再次按下，隐藏MagicCircle生成一些晶体，并处理伤害。
+2. 我们想在MagicCircle中选择不同的数据点来生成晶体。为了实现这一点，我们创建一个PointCollectionActor，在PointCollectionActor中手动固定一些SceneComponent，这些SceneComponent的位置在蓝图中固定。在 PointCollectionActor 中声明一个蓝图原生函数返回给定数目的位置（SceneComponent的位置），返回位置的时候进行线性追踪得到距离地面最近的点。
+3. 在GA中的合适时机生成这个PointCollectionActor并调函数得到一些点位并保存这些点位，然后启动一个Timer，每隔一段时间生成一个晶体。
+4. 创建一个GameplayCue(Brust)来生成晶体，BrustEffect中的粒子效果生成位置来源于Param中的Location
+5. Montage
+   1. 添加一个Tag，Montag中发送MontageEvent。
+   2. 在获取到所有生成晶体的点位后，调用PlayMontageAndWait之后立刻WaitGameplayEvent，在接收到EventTag之后执行后续的操作
+6. 经向放射衰减伤害
+   1. 为了使用经向放射性伤害相关的函数，需要在自定义的DamageEffectParams中增加四个变量【是否是经向衰减伤害，内半径，外半径，原点】并在自定义的GEContext中 同样增加这四个变量【别忘了set和get】，并修改网络序列化函数。在GADamage基类中同样在增加这四个变量，在MakeDamageEffectParams相关函数中将GADamage中这四个变量的值赋值给DamageEffectParams中对应变量的值。
+   2. 在BlurFuncLibrary中定义上述四个变量的Set和Get静态函数。在ApplyDamag中调用Set函数将DamageEffectParams中这四个变量的值赋值给GEContext中对应的变量。
+   3. 为了在自定义伤害计算类中获取到衰减后的伤害，需要如下几个步骤
+      1. 在CombatInterface中创建一个委托，在角色基类中重写TakeDamage函数，广播接收到的Damage。
+      2. 在CombatInterface中写一个函数返回这个委托，解绑EC和Character。
+      3. 在EC中会遍历所有类型的伤害然后累加【如果伤害为0，则continue】，在累加前判定是否是经向衰减伤害，如果是则获取Target上的TakeDamage委托，并绑定一个Lambda函数更新伤害。之后调用 ApplyRadialDamageWithFalloff开始计算经向衰减后的伤害。
+   4. 在蓝图中应用经向伤害
+      1. 在GA蓝图中配置内圈半径和外圈半径，并在生成晶体的Event中设置Origin。
+      2. 在生成晶体的时候【步骤3】获取当前晶体周围的所有Actor，然后调用MakeDamageEffectParamsFromClassDefaults函数创建DamageEffectParams并调用自定义的蓝图可调用 函数库静态函数ApplyDamageEffect应用伤害。
+7. Cost And Cooldown
+   1. 配置好这两个GE，在ABilityInfo中填充CooldownTag
+   2. 在生成第一个晶体后提交Cost，在激活能力最初检测Cost
+   3. 在生成最后一个晶体后提交Cooldown。
+
+
+
+注意在蓝图的Loop中，如如果数据来源来自BlueprintPureFunction，则 每次loop的时候都会重新调用一次该BlueprintPureFunction，如果在该BlueprintPureFunction中使用了随机函数，则更加复杂。因此如果我们希望在BlueprintPureFunction中使用固定的一个随机数，我们需要保存一下BlueprintPureFunction的返回值，然后再Loop，以免每次Loop的时候都重新设置新的随机数。
+
 # 调试
 
 ### 自定义日志
