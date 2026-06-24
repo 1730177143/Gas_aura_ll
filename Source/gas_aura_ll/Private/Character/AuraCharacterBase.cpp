@@ -64,6 +64,27 @@ void AAuraCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(AAuraCharacterBase, bIsBeingShocked);
 }
 
+/**
+ * 角色受到伤害时调用的入口函数
+ * 
+ * 调用父类（AActor）的 TakeDamage 以触发引擎内置的伤害处理流程
+ * 然后广播 OnDamageDelegate，将实际受到的伤害值通知给其他系统
+ * 
+ * @param DamageAmount     原始伤害数值（未经减免）
+ * @param DamageEvent      伤害事件的详细数据（伤害类型、是否暴击、击退信息等）
+ * @param EventInstigator  伤害发起者的控制器
+ * @param DamageCauser     直接造成伤害的 Actor（如投射物、陷阱）
+ * @return 经过减免后实际受到的最终伤害值
+ */
+float AAuraCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+                                     AActor* DamageCauser)
+{
+	const float DamageTaken = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	// 将实际伤害值广播出去，
+	OnDamageDelegate.Broadcast(DamageTaken);
+	return DamageTaken;
+}
+
 UAbilitySystemComponent* AAuraCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
@@ -140,6 +161,11 @@ void AAuraCharacterBase::SetIsBeingShocked_Implementation(bool bInShock)
 bool AAuraCharacterBase::IsBeingShocked_Implementation() const
 {
 	return bIsBeingShocked;
+}
+
+FOnDamageSignature& AAuraCharacterBase::GetOnDamageSignature()
+{
+	return OnDamageDelegate;
 }
 
 void AAuraCharacterBase::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
