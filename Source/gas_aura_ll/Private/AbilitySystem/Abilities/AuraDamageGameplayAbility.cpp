@@ -79,7 +79,7 @@ FDamageEffectParams UAuraDamageGameplayAbility::MakeDamageEffectParamsFromClassD
 			Params.DeathImpulse = DeathImpulseRotation.Vector() * DeathImpulseMagnitude;
 		}
 	}
-	
+
 	if (bIsRadialDamage)
 	{
 		Params.bIsRadialDamage = bIsRadialDamage;
