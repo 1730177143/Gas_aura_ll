@@ -1037,7 +1037,10 @@ GAS执行添加技能，使控制器变更技能信息
 
 **<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">Model-View-ViewModel</font>**<font style="color:rgb(25, 27, 31);"> 多了个</font>**<font style="color:rgb(25, 27, 31);">ViewModel</font>**<font style="color:rgb(25, 27, 31);">。项目中的菜单相关界面使用到了MVVM架构</font>
 
-<font style="color:rgb(25, 27, 31);">上图MVC的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">Controller</font>**<font style="color:rgb(25, 27, 31);"> 可能变得冗余复杂，但是MVVM的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">ViewModel</font>**<font style="color:rgb(25, 27, 31);"> 能对其颗粒度到对应的界面，双箭头也表示双向绑定，</font>**<font style="color:rgb(25, 27, 31);">一头View，一头Modle</font>**<font style="color:rgb(25, 27, 31);">。而且UE有其引入的内容，何乐而不为</font>
+<font style="color:rgb(25, 27, 31);">上图MVC的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">Controller</font>**<font style="color:rgb(25, 27, 31);"> 可能变得冗余复杂，但是MVVM的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">ViewModel</font>**<font style="color:rgb(25, 27, 31);"> 能对其颗粒度到对应的界面，双箭头也表示双向绑定，</font>**<font style="color:rgb(25, 27, 31);">一头View，一头Modle</font>**。
+
+和MVC很相似，有区别的地方在于，在MVC里，Controller会服务多个View，而MVVM里，每个View都拥有一个单独的ViewModel，所以ViewModel相当于精简版的Controller。
+
 
 ![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1729259141664-5d139ab5-51a6-44ec-a045-19ab50e97a03.png)
 
@@ -1048,6 +1051,24 @@ GAS执行添加技能，使控制器变更技能信息
 **ViewModel类：**UMVVM_LoadScreen（整个加载界面） ; MVVM_LoadSlot (存档槽界面)。继承UE的 **<font style="background-color:#EFF0F0;">UMVVMViewModelBase</font>**
 
 **Wgt基类：**LoadScreenWgt
+
+## 初始化你的Viewmodel
+
+当你在Viewmodels窗口中点击Viewmodel时，可以通过 **创建类型（Creation Type）** 设置选择如何将它初始化。可使用以下方法：
+
+| Viewmodel创建类型                                    | 说明                                                         |
+| :--------------------------------------------------- | :----------------------------------------------------------- |
+| **创建实例（Create Instance）**                      | 该控件会自动创建它自己的Viewmodel实例。                      |
+| **手动（Manual）**                                   | 该控件在初始化时Viewmodel为null，你需要手动创建一个实例并为其赋值。 |
+| **全局Viewmodel集合（Global Viewmodel Collection）** | 指你的项目中的所有控件均可使用的全局可用Viewmodel。需要 **全局Viewmodel标识符**。 |
+| **属性路径（Property Path）**                        | 在初始化时，执行一个函数来查找Viewmodel。**Viewmodel属性路径** 将使用句点分隔的成员名称。例如：GetPlayerController.Vehicle.ViewModel。属性路径始终是相对于控件的路径。 |
+
+## C++MVVM 使用流程
+
+1. **定义 ViewModel**：继承 `UMVVMViewModelBase`，将需要 UI 显示的数据声明为 `UPROPERTY(FieldNotify)`。
+2. **Setter 使用宏**：在 Setter 中调用 `UE_MVVM_SET_PROPERTY_VALUE`，它会自动触发 `FieldNotify`，通知所有绑定此属性的 Widget。
+3. **View 绑定**：在 UMG 蓝图（Widget）中，右键属性选择“Create Binding”，将控件的属性绑定到 ViewModel 的某个 FieldNotify 属性或 Getter 函数。
+4. **数据驱动 UI**：当 ViewModel 属性值变化时，绑定的 Widget 自动刷新，无需手动调用 `SetText` 等。
 
 虚幻的MVVM方便之处在于**ViewModel**类中的变量可以设置FieldNotify 属性，在UMG中的绑定视图中，直接把该变量和UI中控件的某属性绑定
 

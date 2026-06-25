@@ -14,7 +14,9 @@
 				"UMG",
 				"CoreUObject",
 				"EnhancedInput",
-				"Niagara"
+				"AIModule",
+				"Niagara",
+				"ModelViewViewModel"
 			]
 		}
 	],
@@ -32,6 +34,14 @@
 		},
 		{
 			"Name": "MotionWarping",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModel",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModelPreview",
 			"Enabled": true
 		}
 	]
