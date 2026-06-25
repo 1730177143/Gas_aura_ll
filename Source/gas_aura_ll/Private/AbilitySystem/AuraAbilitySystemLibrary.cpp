@@ -639,3 +639,67 @@ void UAuraAbilitySystemLibrary::SetIsRadialDamageEffectParam(FDamageEffectParams
 	DamageEffectParams.RadialDamageOuterRadius = OuterRadius;
 	DamageEffectParams.RadialDamageOrigin = Origin;
 }
+
+/**
+ * 设置伤害效果参数中的击退力向量
+ * 
+ * @param DamageEffectParams  需要修改的伤害效果参数结构体（引用，直接修改）
+ * @param KnockbackDirection  期望的击退方向（会被归一化）
+ * @param Magnitude           自定义的击退力度大小；若为 0.f，则使用 DamageEffectParams 中已有的 KnockbackForceMagnitude
+ */
+void UAuraAbilitySystemLibrary::SetKnockbackDirection(FDamageEffectParams& DamageEffectParams,
+                                                      FVector KnockbackDirection, float Magnitude)
+{
+	// 归一化方向向量，确保长度为单位1，这样后续乘以力度后得到的向量长度正好等于力度
+	KnockbackDirection.Normalize();
+
+	if (Magnitude == 0.f)
+	{
+		// 未指定自定义力度时，使用 DamageEffectParams 中预设的击退力度
+		// KnockbackForce = 单位方向 * 预设力度 => 产生沿指定方向、大小等于预设力度的击退力
+		DamageEffectParams.KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;
+	}
+	else
+	{
+		// 指定了自定义力度，则覆盖预设值
+		DamageEffectParams.KnockbackForce = KnockbackDirection * Magnitude;
+	}
+}
+
+/**
+ * 设置伤害效果参数中的死亡冲量方向
+ * 
+ * @param DamageEffectParams  需要修改的伤害效果参数结构体（引用，直接修改）
+ * @param ImpulseDirection    期望的死亡冲量方向（会被归一化）
+ * @param Magnitude           自定义的冲量大小；若为 0.f，则使用 DamageEffectParams 中已有的 DeathImpulseMagnitude
+ */
+void UAuraAbilitySystemLibrary::SetDeathImpulseDirection(FDamageEffectParams& DamageEffectParams,
+                                                         FVector ImpulseDirection, float Magnitude)
+{
+	// 归一化方向向量，确保后续乘法得出的大小准确
+	ImpulseDirection.Normalize();
+
+	if (Magnitude == 0.f)
+	{
+		// 使用预设的死亡冲量大小：单位方向 * 预设力度 => 产生指定方向的死亡冲量
+		DamageEffectParams.DeathImpulse = ImpulseDirection * DamageEffectParams.DeathImpulseMagnitude;
+	}
+	else
+	{
+		// 自定义大小覆盖预设
+		DamageEffectParams.DeathImpulse = ImpulseDirection * Magnitude;
+	}
+}
+
+/**
+ * 设置伤害效果参数中的目标 ASC
+ * 
+ * @param DamageEffectParams  需要修改的伤害效果参数结构体
+ * @param InASC               目标的能力系统组件指针，直接赋值给 TargetAbilitySystemComponent
+ */
+void UAuraAbilitySystemLibrary::SetTargetEffectParamsASC(FDamageEffectParams& DamageEffectParams,
+                                                         UAbilitySystemComponent* InASC)
+{
+	// 将传入的目标 ASC 直接存入参数，供后续 ApplyDamageEffect 使用
+	DamageEffectParams.TargetAbilitySystemComponent = InASC;
+}
