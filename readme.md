@@ -1031,6 +1031,102 @@ GAS执行添加技能，使控制器变更技能信息
 + <font style="background-color:#EFF0F0;">UAuraAbilitySystemComponent</font> 执行函数(<font style="background-color:#FBF5CB;">ForEachAbility</font>)，循环获取有效的能力，执行代理(<font style="background-color:#EFF0F0;">FForEachAbility</font>)进行广播能力。代理在(<font style="background-color:#EFF0F0;">UOverlayWidgetController</font>::<font style="background-color:#FBF5CB;">BroadcastAbilityInfo</font>)中设置为了广播的Lambda表达式，<font style="background-color:#FBF5CB;">ForEachAbility</font> 相当根据能力的Tag查找DA获取能力相关的UI信息，并且进行广播
 + UI界面中的技能球存在输入Tag，当技能信息广播时，判断相关技能是否为对应的输入Tag，如果是，则接受其信息，应用在界面上
 
+# MVVM UI
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1729255845852-02e194b1-9ce6-4f1f-b7ff-26a40db179a2.png)
+
+**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">Model-View-ViewModel</font>**<font style="color:rgb(25, 27, 31);"> 多了个</font>**<font style="color:rgb(25, 27, 31);">ViewModel</font>**<font style="color:rgb(25, 27, 31);">。项目中的菜单相关界面使用到了MVVM架构</font>
+
+<font style="color:rgb(25, 27, 31);">上图MVC的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">Controller</font>**<font style="color:rgb(25, 27, 31);"> 可能变得冗余复杂，但是MVVM的 </font>**<font style="color:rgb(25, 27, 31);background-color:#EFF0F0;">ViewModel</font>**<font style="color:rgb(25, 27, 31);"> 能对其颗粒度到对应的界面，双箭头也表示双向绑定，</font>**<font style="color:rgb(25, 27, 31);">一头View，一头Modle</font>**<font style="color:rgb(25, 27, 31);">。而且UE有其引入的内容，何乐而不为</font>
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1729259141664-5d139ab5-51a6-44ec-a045-19ab50e97a03.png)
+
+因此，菜单界面采用MVVM架构
+
+**HUD基类：**ALoadScreenHUD
+
+**ViewModel类：**UMVVM_LoadScreen（整个加载界面） ; MVVM_LoadSlot (存档槽界面)。继承UE的 **<font style="background-color:#EFF0F0;">UMVVMViewModelBase</font>**
+
+**Wgt基类：**LoadScreenWgt
+
+虚幻的MVVM方便之处在于**ViewModel**类中的变量可以设置FieldNotify 属性，在UMG中的绑定视图中，直接把该变量和UI中控件的某属性绑定
+
+```cpp
+const FString& GetLoadSlotName()const { return LoadSlotName; };
+
+ void SetLoadSlotName(const FString& TargetName)
+ {
+	 UE_MVVM_SET_PROPERTY_VALUE(LoadSlotName,TargetName);//用MVVM的宏，方便被编辑器相关模块采用
+ }
+
+/*
+* FieldNotify 启用对属性的变更通知。UE5引入，更轻松地跟踪和响应属性值的变化，尤其是在数据绑定和MVVM模式下使用时。
+* FieldNotify的变量 被Setter、Getter修饰，必须存在Set和Get函数
+*/
+UPROPERTY(EditAnywhere,BlueprintReadWrite,FieldNotify,Setter,Getter,meta=(AllowPrivateAccess="true"),DisplayName="插槽ID")
+FString LoadSlotName;//存档槽的名字
+```
+
+![](https://cdn.nlark.com/yuque/0/2024/png/36214189/1729445396286-5870b6dd-83bb-48ee-9d0f-6350968b54ae.png)
+
+如上图，该Wgt存在**LoadSlotViewModel**，能直接**让UI控件****<font style="background-color:#E7E9E8;">SlotID</font>****的****<font style="background-color:#E7E9E8;">Text</font>****变量绑定到ViewModel中被FieldNotify修饰的成员****<font style="background-color:#E7E9E8;">LoadSlotName</font>**。
+
+### 游戏主界面和存档
+
+> 主界面（MainMenu)
+
+1. 创建一个主界面map，
+2. 创建一个开始和结束按钮的MainMenuWidget，
+3. 创建一个特殊的主界面显示的主角蓝图，在BeginPlay时播放声音，在播放声音后创建MainMenuWidget并添加到ViewPort，之后并设置UI Only模式（Widget to Focus为mainMenuWidget）和显示鼠标。
+4. 在MainMenuWidget中为这两个按钮按下设置回调事件，在按下开始的时候转到Loadmenu，按下结束的时候退出游戏。
+5. 在ProjectSetting中设置GameDefaultmap为main_Menu。
+
+> Model-View-ViewModel
+
+![img](https://pic4.zhimg.com/v2-8920456beffb90ea5924249a48a56b65_1440w.jpg)
+
+> 加载界面（LoadScreen)
+
+1. 初始操作
+   1. 创建三个SlotWIdget：空白Slot，用于新建游戏该Widget有一个Button；Entername,用于输入角色名新建存档；TakenSlot中显示角色名字，等级，地图
+   2. 创建一个LoadScreenWidgetBase类和蓝图，所有和LoadScreen相关的Widget都继承这个蓝图。
+   3. 创建自定义的LoadSlotSwitcher蓝图，在LoadScreen(Overlay Widget)中使用这个蓝图。
+   4. 创建一个新的HUDc++类，以及蓝图【HUD类在BeginPlay早期被调用】
+   5. 从原来的GameMode c++类创建新的LoadScreenGameMode蓝图。在蓝图中配置HUD
+   6. 启动UMG Viewmodel插件，创建一个MMVM_LoadScreen（MVVMViewModelBase）以及 蓝图。
+2. 使用MVVM架构处理LoadMenu中UI和数据的交互【设置ViewModel】
+   1. 在HUD类的BeginPlay中创建ViewModel；创建LoadMenu并添加到ViewPort；
+   2. 给LoadScreen(Overlay Widget)添加ViewModel只需要在蓝图Window-ViewModel选项中添加即可【相当于添加变量】。添加的ViewModel需要一个PropertyPath【相当于变量赋值】，可以是一个Const函数，该函数返回BP_LoadScreenViewModel。【在5.3以上版本中这时候widget和ViewModel并不会双向绑定，因此如果在Widget中使用ViewModel需要手动调用PropertyPath中配置的Const函数获取ViewModel的指针。
+   3. 为LoadSLotWIdget创建LoadSlotVM，（MVVM_LoadSlot)。LoadScreenVM提供创建LoadSlotVM的函数，和根据Index寻找LoadSlotVM的函数。在HUD创建LoadScreenVM后，调用该函数创建LoadSlotVM。
+   4. 在LoadScreenWidget中增加一个设置VM的蓝图实现函数，在HUD完成步骤三后调用该函数为LoadScreenWidget中的子Widget设置VM。在蓝图中实现该函数，该函数初始化LoadScreenWidget的子Widget，在子Widget的初始化过程中为子Widget的子Widget设置ViewModel
+   5. 注意，对Widget设置ViewModel的时候如果该Widget没有绑定VM上的值会创建失败，需要在VM设置中强制创建，相关设置遵循UE的提示即可。
+3. 切换SwitchWidget中的不同子控件
+   1. 在LoadSlotVM中声明一个委托，该委托携带一个switchIndex。
+   2. 在LoadScreenVM中声明三个函数（函数需要接受SlotIndex），分别对应新建游戏，确定存档名字，选择存档。这些函数处理不同按钮按下的事件。
+   3. 在SwitchWidget蓝图中，为子控件设置完VM后，调用子控件的初始化函数。在每个子控件的初始化函数中绑定按钮回调事件，在按钮回调事件中调用LoadScreenVM中的不同函数。最后调用自己的初始化函数。在SiwtchWidget的初始化函数中绑定LoadSLotVM中的携带SwitchIndex的委托，根据SwitchIndex切换显示不同的子控件。
+4. 保存游戏对象。
+   1. 创建SaveGame的子类LoadScreenSaveGame和蓝图。在GameMode类中保存LoadScreenSaveGame类类型，并创建一个保存游戏的函数，该函数接受一个MVVM_LoadSlot类型的变量和SlotIndex作为输入，即保存LoadSlotVM中的变。
+   2. 只GameMode的保存函数中先根据SlotName和Index判断是否存在存档，如果存在则删除。之后创建存档，保存游戏。【注：UE中保存游戏似乎以为SlotName和SlotIndex作为存档的“主键”】
+   3. 在LoadScreen_VM的NewSlotNameButtonPressed按下后调用GameMode中的保存游戏函数。
+5. Widget绑定VM中的变量
+   1. 在VM中对需要绑定的变量添加如下修饰UPROPERTY(EditAnywhere,BlueprintReadWrite,FieldNotify,Setter,Getter);在Setter函数中调用MVVM宏，该宏在Set变量的同时会广播委托。
+   2. 在WIdget蓝图中将Text文本框或者其他组件绑定到VM中的变量
+6. 从磁盘加载插槽状态
+   1. 在自定义SaveGame类中增加一个状态枚举变量。
+   2. 在GameMode中增加一个加载Slot的函数。
+   3. 在LoadScreenVM中增加一个加载函数，该函数遍历所有的SlotVM并加载数据，如果加载成功则设置SlotVM的状态，然后调用SLotVM的初始化函数（广播数据以便显示正确的 子控件）。
+   4. 在HUD函数中调用LoadScreenVM的加载函数。
+   5. 在LoadScreenVM的NewSlotNameButtonPressed函数（在新建slot输入角色ID并点击确认按钮后会调用这个函数）中记得设置SlotVM的状态。
+7. 存档选择和删除相关功能
+   1. 选择slot后，Button将会禁用。在LoadSlotVM中创建一个广播bool的委托。在LoadScreenVM中的选择按钮按下功能后广播LoadSLotVM中的委托。在Widget中绑定该委托，并根据Bool设置Button的启用和禁用。
+   2. 在选择slot之前，Play和Delete按钮应该被禁用。这就需在LoadScreenVM中广播一个SLot被选中的委托。在LoadScreenWidget的EventConstruct函数中禁用这两个按钮，在初始化函数中绑定VM的委托启用这两个按钮。
+   3. 创建AreYouSureWidget，在LoadScreenWidget的删除按钮按下后把AreYouSureWidget添加到ViewPort，并禁用选择和删除按钮。AreYouSureWidget的取消按钮会发送一个取消事件，AreYouSureWidget接收到这个取消事件后启用选择和删除按钮。
+   4. AreYouSureWidget的确认按钮会广播一个按钮按下事件，在LoadScreenWidget中会绑定这个按下事件，并调用VM中的删除函数。在删除函数里调用GameMode的删除slot函数。并设置slot的状态为空，调用slot的初始化函数（选择显示正确的Widget），调用slot广播EnableButton以便下次创建后选择按钮无法点击。【注意，为了确保删除的时候定位到选定的Slot，LoadScreenVM中会保存当前选中的Slot的VM指针（按下时保存】。并在删除Slot后清空 这个指针】
+   5. 在AuraGameModeBase中增加一个地图Map。在LoadSlotVM中增加一个地图名的变量，并设置Setter和getter，在LoadScreenVM的新建存档函数中设置SlotVM的PlayerName，此时会广播一个PlayerName委托，在Widget中绑定VM的该委托即可。在GameMode的 保存游戏函数中同样保存 Map名字，加载存档的时候调用VM的SetMapName。
+8. 存档确认加载地图功能
+   1. LoadScreenWidget中的开始游戏按钮绑定点击事件，调用LoadScreenVM的开始游戏函数
+   2. VM的开始游戏函数判断Selectslot是否有效，如果有效调用GameMode的加载地图函数。
+
 # 敌人
 
 ## 敌人血条
@@ -1581,6 +1677,35 @@ GA中阻止所有的Ga标签
 
 
 注意在蓝图的Loop中，如如果数据来源来自BlueprintPureFunction，则 每次loop的时候都会重新调用一次该BlueprintPureFunction，如果在该BlueprintPureFunction中使用了随机函数，则更加复杂。因此如果我们希望在BlueprintPureFunction中使用固定的一个随机数，我们需要保存一下BlueprintPureFunction的返回值，然后再Loop，以免每次Loop的时候都重新设置新的随机数。
+
+### FireBlast!
+
+> 初始操作
+
+1. 创建一个DamageGA的子类FireBlast，增加一个变量NumBall表示火球数量。创建该GA的蓝图并分配GameplayTag。
+2. 在AbilityData资产中增加该GA的信息。
+3. 将OffensiveTree的某个Widget的Tag设置为该GA的Tag
+4. 创建CostGE和CooldownGE，并在GA中配置他们
+
+> Spawn Actor
+
+1. 基于AuraProjectiles创建一个新的Actor，FireBall。在beginPlay中调用父类的beginPlay初始化一些模块，重写父类的Overlap方法。创建FireBall蓝图，并配置相关的视觉和声音效果，禁用Movementcomponent（Start with tick enable 为false，auto activate 为false）
+2. 在GA_FireBlast中保存FireBall类类型，并提供一个SpawnFireBall蓝图可调用函数。
+
+> 火球飞出去在飞回来（需要实时确定Avatar的位置）并且爆炸。用Timelines实现
+
+1. 在FireBall Actor中增加Avatar的指针，在GA中生成Actor的时候保存这个指针。
+2. 在FireBall Actor中增肌一个开始Timelin 的蓝图可实现事件，并在BeginPlay中调用这个事件。
+3. 在StartTimeline函数中，如果是服务器则存储其实位置和结束位置结束位置根据Distance和朝向计算得到，之后启动Timeline插值更新Actor的位置，Timeline结束后再启动Timeline回到Avatar身边。在第二次Timeline的时候判断Actor的位置和Avatar的距离是否小于临界值，如果是就调用该Actor父类的OnHit函数播放爆炸效果和声音，最后调用销毁函数
+
+> 造成伤害
+
+1. 在GA中设置伤害类型标签，配置伤害ScalableTable，取消KnockBack功能。
+2. 在Actor的Overlap事件中获取目标ASC，在DamageEffectParams中设置DeathImpulse（和Actor重叠时候的位置相关），最后调用BlueFuncLibrary::ApplyDamageEffect。
+3. 实现爆炸伤害：
+   1. 在Actor中创建一个受保护的ExplosionDamageParams。在蓝图可调用函数中声明一些修改DamageParams中内容的静态函数以便在蓝图中调用。
+   2. 在SpawnActor的时候初始化ExplosionDamageParams
+   3. 在蓝图中Actor爆炸后，获取周围的Actor，然后设置ExplosionDamageParams中和RadialDamage,KnockImpulse,DeathImpulse相关的参数，并对周围的Actor应用伤害。
 
 # 调试
 
