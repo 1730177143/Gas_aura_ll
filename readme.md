@@ -1147,6 +1147,8 @@ FString LoadSlotName;//存档槽的名字
 8. 存档确认加载地图功能
    1. LoadScreenWidget中的开始游戏按钮绑定点击事件，调用LoadScreenVM的开始游戏函数
    2. VM的开始游戏函数判断Selectslot是否有效，如果有效调用GameMode的加载地图函数。
+   
+   
 
 # 存档与读取
 
@@ -1172,6 +1174,106 @@ FString LoadSlotName;//存档槽的名字
 ## 存档槽
 
 存档槽的界面控制为**<font style="background-color:#E7E9E8;">UMVVM_LoadSlot</font>** 能够设置读取存档状态，切换存档槽界面显示 **新建存档、读取存档、输入存档名称三种界面**
+
+## 场景状态
+
+**数据思路：**
+
+ 场景中存在各种Actor可能需要保存，因此定义结构体 **<font style="background-color:#EFF0F0;">FSavedActor</font>** 用以标识场景中被保存的Actor的状态，为了方便储存Actor中的内容，采用了字节数组储存Actor序列化后的内容。Actor中想要序列化储存的变量用 **<font style="color:#D22D8D;background-color:#E6DCF9;">SaveGame</font>**<font style="color:#D22D8D;background-color:#E6DCF9;"> </font>进行修饰
+
+一个地图存在多个想要储存的Actor，而且又存在不同的地图，因此定义结构体 **<font style="background-color:#EFF0F0;">FSavedMap</font>** 来标识地图和地图下保存的Actor
+
+加载之后会调用可保存状态Actor(继承 **<font style="background-color:#E7E9E8;">ISaveInterface</font>** )的 <font style="background-color:#FBF5CB;">LoadActor</font> 函数，因此再次根据存档数据设置状态;
+
+**存档流程：**
+
+获取当前存档，通过迭代器 **<font style="background-color:#EFF0F0;">FActorIterator</font>** 获取场景所有Actor( 通过是否继承接口 **<font style="background-color:#EFF0F0;">ISaveInterface</font>**** **判断是否为应该储存的对象，也降低获取场景Actor的消耗 )，进行序列化操作读写储存
+
+于角色 **<font style="background-color:#FBF5CB;">PossessedBy</font>**** **时进行加载地图状态
+
+---
+
+> 存档功能
+
+1. PlayerStart的持久化（使用Game Instance)
+   1. 在LoadSlotVm和LoadScreenSaveGame中均增加一个变量PlayerStartTag。
+   2. 创建一个自定义的AuraGameInstance类（父类为GameInstance）在该类中保存PlayStartActor的Tag和其他信息 ，在LoadScreenVB的NewLostNamePressed函数中获取GameInstance，并修改GI和LoadSlotVM中的PlayerStartTag。【在AuraGameMode中保存默认GameStartTag】
+   3. 在SaveMode的保存SLot函数中保存LoadSLotVm中的PlayerStartTag；在读取SLot的函数中加载SaveGame中的PlayerStartTg到LoadSLotVM。
+   4. 在LoadScreen的playerbuttonPressed函数中获取GameInstance，并设置PlayerStartTag。
+   5. 在编辑器中配置AuraGameMode中的默认GameStartTag，创建AuraGameInstance的蓝图，并在项目设置中设置GemeInstance为该蓝图。在地图中创建一个PlayerStart修改Tag为默认tag。
+   6. 后续再存档点存档的时候修改LoadSLotVM中保存的PlayerStartTaG
+2. CheckPoint保存所有内容
+   1. 创建PlayerStart的子类checkPoint，设置mesh,Sphere，重叠的时候高亮动态材质。
+   2. 在重叠后判断重叠对象是否实现了Player接口，如果实现了调用SaveProgress函数。在SaveProgress函数中通过GameMode获取当前的SaveGame内容，并修改PlayerStartTag。在SaveGame中增加需要保存的其他变量，在Player接口的 SaveProgress函数中给这些变量赋值。然后调用GameMode函数保存SaveGame。
+   3. GameMode中通过GameInstance获取SlotName和Index获取到SaveGame内容返回调用者。GameMode的保存游戏进度函数会通过GameInstance获取SlotName和Index然后保存SaveGame。
+3. 保存和保存GameplayAbility
+   1. 新增数据：FSavedAbility结构。LoadScreenSaveGame中TArray<FSavedAbility> SavedAbilities变量。
+   2. 保存：AuraCharacter::SaveProgress_Implementation-->AAuraGameModeBase::SaveGameProgressDate。
+   3. 加载：AAuraCharacter::LoadProgress-->UAuraAbilitySystemComponent::AddCharacterAbilitiesFromSaveData
+4. 加载和保存WorldState
+   1. 再SaveGame中增加FSavedActor结构用于保存Actor，增加SavedMap结构用于保存Map。CheckPoint实现SaveActor接口。
+   2. ACheckPoint::OnSphereOverlap函数中修改Actor自身状态，调用AAuraGameModeBase::SaveWorldState函数保存Actor中标记的变量，并更新SaveGame中的Map信息和Actor信息。
+   3. 加载：在AAuraCharacter::PossessedBy函数中调用AAuraGameModeBase::LoadWorldState函数
+
+## 存档序列化
+
+### 核心概念
+- **存档对象**：继承 `USaveGame`，用 `UPROPERTY(SaveGame)` 标记需持久化的属性。
+- **序列化方式**：通过 `FMemoryWriter`/`FMemoryReader` + `FObjectAndNameAsStringProxyArchive` 实现。
+- **存档单位**：使用 `FSavedActor` 存储单个 Actor 的名称、Transform 和二进制数据；`FSavedMap` 存储地图中所有保存的 Actor。
+
+### 序列化流程（SaveWorldState）
+1. 获取世界名称，移除流式关卡前缀。
+2. 从 GameInstance 获取当前存档槽。
+3. 加载或创建 `ULoadScreenSaveGame` 对象。
+4. 遍历世界中的所有 Actor，筛选实现 `ISaveInterface` 的 Actor。
+5. 每个 Actor：
+   - 手动记录 `ActorName`、`Transform`。
+   - 创建 `FMemoryWriter`，包装为 `FObjectAndNameAsStringProxyArchive`，设置 `ArIsSaveGame = true`。
+   - 调用 `Actor->Serialize(Archive)`，将 `SaveGame` 属性写入 `Bytes`。
+6. 更新存档中的 `FSavedMap`，调用 `UGameplayStatics::SaveGameToSlot` 落盘。
+
+### 反序列化流程（LoadWorldState）
+1. 检查存档是否存在，从磁盘加载 `ULoadScreenSaveGame`。
+2. 遍历世界所有 Actor，查找实现了 `ISaveInterface` 的 Actor。
+3. 在对应地图的 `FSavedMap::SavedActors` 中按 `ActorName` 匹配：
+   - 若允许加载 Transform，恢复位置。
+   - 创建 `FMemoryReader`，同样用 `FObjectAndNameAsStringProxyArchive` 设置 `ArIsSaveGame`。
+   - 调用 `Actor->Serialize(Archive)`，将 `Bytes` 反序列化回属性。
+   - 调用 `ISaveInterface::Execute_LoadActor` 触发自定义恢复逻辑。
+
+### 属性标记机制
+- 使用 `UPROPERTY(SaveGame)` 标记需要持久化的属性。
+- 序列化时通过 `ArIsSaveGame = true` 过滤，**仅处理已标记的属性**。
+
+### 存档数据结构
+```cpp
+USTRUCT()
+struct FSavedActor {
+    FName ActorName;
+    FTransform Transform;
+    TArray<uint8> Bytes;  // 自动序列化的 SaveGame 属性
+};
+
+USTRUCT()
+struct FSavedMap {
+    FString MapAssetName;
+    TArray<FSavedActor> SavedActors;
+};
+```
+- `Bytes` 数组由 `Actor->Serialize(Archive)` 自动填充或读取。
+- 无需在 `FSavedActor` 中手动添加通用属性；应依赖 `SaveGame` 标记。
+
+### 官方推荐与最佳实践
+- **以 `SaveGame` 标记为主**，让反射系统自动处理属性序列化。
+- 通用结构体（如 `FSavedActor`）仅保存**最小元数据**（Name, Transform）。
+- 使用接口（`ISaveInterface`）提供 `ShouldLoadTransform`、`LoadActor` 等扩展点。
+- 避免在存档容器中手工复制业务属性，保持封装性和可维护性。
+
+### 为什么选择这种方案
+- **自动性**：新增属性只需添加 `SaveGame`，无需修改存档框架。
+- **安全性**：`FObjectAndNameAsStringProxyArchive` 将对象引用转为字符串路径，防止指针失效。
+- **选择性**：仅保存必要数据，避免泄露运行时临时状态。
 
 # 敌人
 
