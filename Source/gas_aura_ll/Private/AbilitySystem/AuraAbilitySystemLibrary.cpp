@@ -7,6 +7,7 @@
 #include "AuraGameplayTags.h"
 #include "Engine/OverlapResult.h"
 #include "Game/AuraGameModeBase.h"
+#include "Game/LoadScreenSaveGame.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AuraPlayerState.h"
@@ -96,6 +97,66 @@ void UAuraAbilitySystemLibrary::InitializeDefaultAttributes(const UObject* World
 	VitalAttributesContextHandle.AddSourceObject(AvatarActor);
 	const FGameplayEffectSpecHandle VitalAttributesSpecHandle = ASC->MakeOutgoingSpec(
 		CharacterClassInfo->VitalAttributes, Level, VitalAttributesContextHandle);
+	ASC->ApplyGameplayEffectSpecToSelf(*VitalAttributesSpecHandle.Data.Get());
+}
+
+/**
+ * 根据存档数据初始化角色的默认属性（主要属性、次要属性、生命法力等）
+ * 
+ * 流程：
+ * 1. 使用 PrimaryAttributes_SetByCaller 效果，将存档中的力量/智力/韧性/活力
+ *    通过 SetByCaller 赋值后应用到目标 ASC。
+ * 2. 应用 SecondaryAttributes_Infinite（无限持续时间的次要属性 GE），
+ *    该效果会根据当前主要属性自动计算护甲、暴击等衍生属性。
+ * 3. 应用 VitalAttributes（生命/法力基础值），完成角色的基本属性初始化。
+ * 
+ * @param WorldContextObject 世界上下文对象，用于获取 CharacterClassInfo
+ * @param ASC                目标角色的 AbilitySystemComponent
+ * @param SaveGame           存档对象，包含已保存的属性值
+ */
+void UAuraAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(const UObject* WorldContextObject,
+                                                                        UAbilitySystemComponent* ASC,
+                                                                        ULoadScreenSaveGame* SaveGame)
+{
+	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
+	if (CharacterClassInfo == nullptr) return;
+
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+	const AActor* SourceAvatarActor = ASC->GetAvatarActor();
+
+	// ---------- 应用主要属性 GE ----------
+	FGameplayEffectContextHandle EffectContextHandle = ASC->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(SourceAvatarActor);
+
+	const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(
+		CharacterClassInfo->PrimaryAttributes_SetByCaller, 1.f, EffectContextHandle);
+
+	// 使用 SetByCaller 将存档中的属性值注入到 GE 规格中，因为玩家可以加点，所以不能直接从默认 GE 设置，必须从存档获取
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Strength,
+	                                                              SaveGame->Strength);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
+		SpecHandle, GameplayTags.Attributes_Primary_Intelligence,
+		SaveGame->Intelligence);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(
+		SpecHandle, GameplayTags.Attributes_Primary_Resilience,
+		SaveGame->Resilience);
+	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attributes_Primary_Vigor,
+	                                                              SaveGame->Vigor);
+
+	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+
+	// ---------- 应用次要属性 GE（Infinite 类型，用于持续计算衍生属性） ----------
+	FGameplayEffectContextHandle SecondaryAttributesContextHandle = ASC->MakeEffectContext();
+	SecondaryAttributesContextHandle.AddSourceObject(SourceAvatarActor);
+	const FGameplayEffectSpecHandle SecondaryAttributesSpecHandle = ASC->MakeOutgoingSpec(
+		CharacterClassInfo->SecondaryAttributes_Infinite, 1.f, SecondaryAttributesContextHandle);
+	ASC->ApplyGameplayEffectSpecToSelf(*SecondaryAttributesSpecHandle.Data.Get());
+
+	// ---------- 应用生命/法力等核心属性 GE ----------
+	FGameplayEffectContextHandle VitalAttributesContextHandle = ASC->MakeEffectContext();
+	VitalAttributesContextHandle.AddSourceObject(SourceAvatarActor);
+	const FGameplayEffectSpecHandle VitalAttributesSpecHandle = ASC->MakeOutgoingSpec(
+		CharacterClassInfo->VitalAttributes, 1.f, VitalAttributesContextHandle);
 	ASC->ApplyGameplayEffectSpecToSelf(*VitalAttributesSpecHandle.Data.Get());
 }
 

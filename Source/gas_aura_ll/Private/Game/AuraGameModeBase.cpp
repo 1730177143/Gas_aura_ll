@@ -3,7 +3,9 @@
 
 #include "Game/AuraGameModeBase.h"
 
+#include "Game/AuraGameInstance.h"
 #include "Game/LoadScreenSaveGame.h"
+#include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/ViewModel/MVVM_LoadSlot.h"
 /**
@@ -76,6 +78,43 @@ void AAuraGameModeBase::DeleteSlot(const FString& SlotName, int32 SlotIndex)
 }
 
 /**
+ * 从当前游戏实例记录的槽位中读取游戏内的存档数据
+ * 
+ * @return 加载的 ULoadScreenSaveGame 对象，若不存在则返回新创建的空存档
+ */
+ULoadScreenSaveGame* AAuraGameModeBase::RetrieveInGameSaveData()
+{
+	// 获取自定义游戏实例，读取当前加载的存档槽名称和索引
+	UAuraGameInstance* AuraGameInstance = Cast<UAuraGameInstance>(GetGameInstance());
+
+	const FString InGameLoadSlotName = AuraGameInstance->LoadSlotName;
+	const int32 InGameLoadSlotIndex = AuraGameInstance->LoadSlotIndex;
+
+	// 调用已有的通用加载函数，从该槽位取出存档数据
+	return GetSaveSlotData(InGameLoadSlotName, InGameLoadSlotIndex);
+}
+
+/**
+ * 将游戏内的进度数据保存到当前槽位
+ * 
+ * @param SaveObject 包含最新游戏进度（如玩家位置标签）的存档对象
+ */
+void AAuraGameModeBase::SaveInGameProgressData(ULoadScreenSaveGame* SaveObject)
+{
+	// 获取自定义游戏实例，读取当前使用的存档槽
+	UAuraGameInstance* AuraGameInstance = Cast<UAuraGameInstance>(GetGameInstance());
+
+	const FString InGameLoadSlotName = AuraGameInstance->LoadSlotName;
+	const int32 InGameLoadSlotIndex = AuraGameInstance->LoadSlotIndex;
+
+	// 将进度中的 PlayerStartTag 同步回 GameInstance，以便下次加载时使用正确的出生点
+	AuraGameInstance->PlayerStartTag = SaveObject->PlayerStartTag;
+
+	// 写入磁盘，覆盖原有的存档
+	UGameplayStatics::SaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
+}
+
+/**
  * 根据选中的存档槽加载对应地图
  * 
  * @param Slot 选中的 LoadSlot ViewModel，其中 MapName 用于查找地图引用
@@ -87,6 +126,45 @@ void AAuraGameModeBase::TravelToMap(UMVVM_LoadSlot* Slot)
 
 	// 使用软对象指针异步加载并打开地图
 	UGameplayStatics::OpenLevelBySoftObjectPtr(Slot, Maps.FindChecked(Slot->GetMapName()));
+}
+
+/**
+ * 重写游戏模式选择玩家出生点的逻辑
+ * 
+ * 根据游戏实例中存储的 PlayerStartTag 查找匹配的 PlayerStart 作为出生点，
+ * 若未找到匹配项则回退到场景中第一个 PlayerStart。
+ * 
+ * @param Player 需要选择出生点的控制器
+ * @return 选中的出生点 Actor，若无任何 PlayerStart 则返回 nullptr
+ */
+AActor* AAuraGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
+{
+	// 获取 Aura 自定义游戏实例，读取要使用的出生点标签
+	UAuraGameInstance* AuraGameInstance = Cast<UAuraGameInstance>(GetGameInstance());
+
+	TArray<AActor*> Actors;
+	// 获取场景中所有 APlayerStart 类型的 Actor
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), Actors);
+	if (Actors.Num() > 0)
+	{
+		// 默认使用第一个 PlayerStart 作为回退
+		AActor* SelectedActor = Actors[0];
+		for (AActor* Actor : Actors)
+		{
+			if (APlayerStart* PlayerStart = Cast<APlayerStart>(Actor))
+			{
+				// 标签匹配则直接选用该出生点
+				if (PlayerStart->PlayerStartTag == AuraGameInstance->PlayerStartTag)
+				{
+					SelectedActor = PlayerStart;
+					break;
+				}
+			}
+		}
+		return SelectedActor;
+	}
+	// 未找到任何 PlayerStart
+	return nullptr;
 }
 
 void AAuraGameModeBase::BeginPlay()

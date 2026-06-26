@@ -8,14 +8,65 @@
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "AbilitySystem/Abilities/AuraGameplayAbility.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
+#include "Game/LoadScreenSaveGame.h"
 #include "gas_aura_ll/AuraLogChannels.h"
 #include "Interaction/PlayerInterface.h"
+
 
 void UAuraAbilitySystemComponent::AbilityActorInfoSet()
 {
 	//OnGameplayEffectAppliedDelegateToSelf 只在服务器端调用。
 	//为确保客户端也能触发回调，EffectApplied 应该是 Client RPC 函数（Client RPC : 服务器端发起调用，客户端执行逻辑）
 	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UAuraAbilitySystemComponent::ClientEffectApplied);
+}
+
+/**
+ * 从存档数据中恢复角色的技能
+ * 
+ * 遍历存档里的所有技能数据，根据技能类型（主动/被动）和状态
+ * 调用 GAS 的 GiveAbility 或 GiveAbilityAndActivateOnce 来重新赋予技能，
+ * 并恢复被动技能的激活效果。完成后广播 AbilitiesGivenDelegate。
+ * 
+ * @param SaveData 包含之前保存的所有技能信息的 LoadScreenSaveGame 对象
+ */
+void UAuraAbilitySystemComponent::AddCharacterAbilitiesFromSaveData(ULoadScreenSaveGame* SaveData)
+{
+	for (const FSavedAbility& Data : SaveData->SavedAbilities)
+	{
+		const TSubclassOf<UGameplayAbility> LoadedAbilityClass = Data.GameplayAbility;
+
+		// 创建技能规格，并设置技能等级
+		FGameplayAbilitySpec LoadedAbilitySpec = FGameplayAbilitySpec(LoadedAbilityClass, Data.AbilityLevel);
+
+		// 在动态源标签中恢复槽位和状态（如 "InputTag.1", "Abilities.Status.Equipped"）
+		LoadedAbilitySpec.GetDynamicSpecSourceTags().AddTag(Data.AbilitySlot);
+		LoadedAbilitySpec.GetDynamicSpecSourceTags().AddTag(Data.AbilityStatus);
+
+		if (Data.AbilityType == FAuraGameplayTags::Get().Abilities_Type_Offensive)
+		{
+			// 主动技能：直接给予技能，不需要立即激活
+			GiveAbility(LoadedAbilitySpec);
+		}
+		else if (Data.AbilityType == FAuraGameplayTags::Get().Abilities_Type_Passive)
+		{
+			// 被动技能：需要检查是否在当时处于装备状态
+			if (Data.AbilityStatus.MatchesTagExact(FAuraGameplayTags::Get().Abilities_Status_Equipped))
+			{
+				// 已装备的被动技能：给予并立即激活一次，然后广播激活事件以刷新特效
+				GiveAbilityAndActivateOnce(LoadedAbilitySpec);
+				MulticastActivatePassiveEffect(Data.AbilityTag, true);
+			}
+			else
+			{
+				// 未装备的被动技能（如已解锁但未装备）：仅给予，不激活
+				GiveAbility(LoadedAbilitySpec);
+			}
+		}
+	}
+
+	// 标记初始技能已授予，并广播委托（通知 UI 等系统技能已就绪）
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast();
 }
 
 void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities)
