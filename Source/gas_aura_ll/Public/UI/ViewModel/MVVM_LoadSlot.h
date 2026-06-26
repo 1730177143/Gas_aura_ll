@@ -4,16 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "MVVMViewModelBase.h"
+#include "Game/LoadScreenSaveGame.h"
 #include "MVVM_LoadSlot.generated.h"
-
-// 存档槽的三种状态枚举
-UENUM(BlueprintType)
-enum ESaveSlotStatus
-{
-	Vacant, // 空槽位
-	EnterName, // 等待输入名称
-	Taken // 已被占用
-};
 
 // 委托：通知 View 切换 WidgetSwitcher 的索引（用于显示不同状态的子控件）
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSetWidgetSwitcherIndex, int32, WidgetSwitcherIndex);

@@ -1092,7 +1092,7 @@ FString LoadSlotName;//存档槽的名字
 
 如上图，该Wgt存在**LoadSlotViewModel**，能直接**让UI控件****<font style="background-color:#E7E9E8;">SlotID</font>****的****<font style="background-color:#E7E9E8;">Text</font>****变量绑定到ViewModel中被FieldNotify修饰的成员****<font style="background-color:#E7E9E8;">LoadSlotName</font>**。
 
-### 游戏主界面和存档
+## 游戏主界面和存档
 
 > 主界面（MainMenu)
 
@@ -1147,6 +1147,31 @@ FString LoadSlotName;//存档槽的名字
 8. 存档确认加载地图功能
    1. LoadScreenWidget中的开始游戏按钮绑定点击事件，调用LoadScreenVM的开始游戏函数
    2. VM的开始游戏函数判断Selectslot是否有效，如果有效调用GameMode的加载地图函数。
+
+# 存档与读取
+
+## LocalPlayerSaveGame基类
+
+在5.3以后，增加了一个LocalPlayerSaveGame基类，它可以实现与特定的本地玩家关联，也就是可以实现本地多人游戏
+
+| 特性                 | `USaveGame` (基类)                                           | `ULocalPlayerSaveGame` (子类)                           |
+| :------------------- | :----------------------------------------------------------- | :------------------------------------------------------ |
+| **核心定位**         | 通用存档基类，序列化任意数据。                               | 专用于与特定本地玩家 (`ULocalPlayer`) 绑定的存档。      |
+| **使用 API**         | `UGameplayStatics::LoadGameFromSlot`<br>`UGameplayStatics::SaveGameToSlot` | 专用方法：<br>`LoadOrCreateSaveGameForLocalPlayer` 等   |
+| **玩家关联**         | 数据不与玩家对象绑定。                                       | 内部持有 `OwningPlayer` 指针，强关联。                  |
+| **适用游戏类型**     | 单人游戏、全局存档、服务器端存档。                           | **本地多人**（同屏/分屏）游戏。                         |
+| **联网/联机游戏**    | **服务器端**：存放全局游戏状态、防作弊关键数据等。           | **客户端**：存放本地玩家设置、个人偏好等。              |
+| **专用服务器兼容性** | 兼容（无 `ULocalPlayer` 依赖）。                             | **不兼容**（专用服务器无本地玩家概念）。                |
+| **内置功能**         | 基础序列化。                                                 | 含存档版本管理 (`SavedDataVersion`)、请求追踪等。       |
+| **注意事项**         | 手动管理存档生命周期。                                       | UE 5.5 附近版本，多个异步保存可能触发断言，需控制并发。 |
+
+存档类 **<font style="background-color:#E7E9E8;">ULoadScreenSaveGame </font>**，以此保存数据。
+
+但是项目保存获取的数据存在多次折转。比如存档槽的数据，要和存档界面以及和游戏实例进行交互，这点注意纰漏。
+
+## 存档槽
+
+存档槽的界面控制为**<font style="background-color:#E7E9E8;">UMVVM_LoadSlot</font>** 能够设置读取存档状态，切换存档槽界面显示 **新建存档、读取存档、输入存档名称三种界面**
 
 # 敌人
 

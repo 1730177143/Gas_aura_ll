@@ -59,6 +59,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlayButtonPressed();
 	
+	void LoadData();
+	
 	/** 设置存档槽总数（触发 FieldNotify，更新 UI） */
 	void SetNumLoadSlots(int32 InNumLoadSlots);
 

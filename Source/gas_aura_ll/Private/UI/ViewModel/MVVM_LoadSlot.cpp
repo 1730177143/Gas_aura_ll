@@ -1,6 +1,7 @@
 // gas_aura_ll
 
 #include "UI/ViewModel/MVVM_LoadSlot.h"
+#include  "Game/LoadScreenSaveGame.h"
 
 void UMVVM_LoadSlot::InitializeSlot()
 {
