@@ -18,6 +18,7 @@
 #include "GameFramework/Character.h"
 #include "gas_aura_ll/gas_aura_ll.h"
 #include "Interaction/EnemyInterface.h"
+#include "Interaction/HighlightInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
 
 AAuraPlayerController::AAuraPlayerController()
@@ -173,8 +174,8 @@ void AAuraPlayerController::CursorTrace()
 	// 如果 ASC 存在且含有阻止光标追踪的标签，则取消所有高亮并直接返回
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_CursorTrace))
 	{
-		if (LastActor) LastActor->UnHighlightActor();
-		if (ThisActor) ThisActor->UnHighlightActor();
+		UnHighlightActor(LastActor);
+		UnHighlightActor(ThisActor);
 
 		LastActor = nullptr;
 		ThisActor = nullptr;
@@ -187,19 +188,19 @@ void AAuraPlayerController::CursorTrace()
 
 	// 更新上一帧和当前帧的悬停 Actor
 	LastActor = ThisActor;
-	ThisActor = CursorHit.GetActor();
-
+	if (IsValid(CursorHit.GetActor()) && CursorHit.GetActor()->Implements<UHighlightInterface>())
+	{
+		ThisActor = CursorHit.GetActor();
+	}
+	else
+	{
+		ThisActor = nullptr;
+	}
 	// 若 Actor 发生变化，取消旧的高亮，添加新的高亮
 	if (LastActor != ThisActor)
 	{
-		if (LastActor)
-		{
-			LastActor->UnHighlightActor();
-		}
-		if (ThisActor)
-		{
-			ThisActor->HighlightActor();
-		}
+		UnHighlightActor(LastActor);
+		HighlightActor(ThisActor);
 	}
 }
 
@@ -248,6 +249,22 @@ void AAuraPlayerController::UpdateMagicCircleLocation()
 }
 
 
+void AAuraPlayerController::HighlightActor(AActor* InActor)
+{
+	if (IsValid(InActor) && InActor->Implements<UHighlightInterface>())
+	{
+		IHighlightInterface::Execute_HighlightActor(InActor);
+	}
+}
+
+void AAuraPlayerController::UnHighlightActor(AActor* InActor)
+{
+	if (IsValid(InActor) && InActor->Implements<UHighlightInterface>())
+	{
+		IHighlightInterface::Execute_UnHighlightActor(InActor);
+	}
+}
+
 void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_InputPressed))
@@ -256,9 +273,9 @@ void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 	}
 	if (InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
 	{
-		if (ThisActor)
+		if (IsValid(ThisActor))
 		{
-			TargetingStatus = ThisActor != nullptr
+			TargetingStatus = ThisActor->Implements<UEnemyInterface>()
 				                  ? ETargetingStatus::TargetingEnemy
 				                  : ETargetingStatus::TargetingNonEnemy;
 		}
@@ -282,13 +299,19 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 		return;
 	}
+
 	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
+
 	if (TargetingStatus != ETargetingStatus::TargetingEnemy && !bShiftKeyDown)
 	{
 		const APawn* ControlledPawn = GetPawn();
 		if (FollowTime <= ShortPressThreshold && ControlledPawn)
 		{
-			if (GetASC() && !GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_InputPressed))
+			if (IsValid(ThisActor) && ThisActor->Implements<UHighlightInterface>())
+			{
+				IHighlightInterface::Execute_SetMoveToLocation(ThisActor, CachedDestination);
+			}
+			else if (GetASC() && !GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_InputPressed))
 			{
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
 			}
