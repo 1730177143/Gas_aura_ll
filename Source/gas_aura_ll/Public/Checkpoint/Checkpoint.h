@@ -74,6 +74,7 @@ protected:
 	void CheckpointReached(UMaterialInstanceDynamic* DynamicMaterialInstance);
 
 	// 禁用碰撞并应用激活视觉效果的统一入口
+	UFUNCTION(BlueprintCallable)
 	void HandleGlowEffects();
 
 	// 检查点的静态网格体（主要视觉模型）

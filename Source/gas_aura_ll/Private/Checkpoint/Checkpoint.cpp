@@ -107,9 +107,9 @@ void ACheckpoint::HandleGlowEffects()
 	// 激活后不再需要碰撞，避免重复触发
 	Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 创建动态材质实例，允许蓝图修改参数（如发光、颜色变化）
-	UMaterialInstanceDynamic* DynamicMaterialInstace = UMaterialInstanceDynamic::Create(
+	UMaterialInstanceDynamic* DynamicMaterialInstance = UMaterialInstanceDynamic::Create(
 		CheckpointMesh->GetMaterial(0), this);
-	CheckpointMesh->SetMaterial(0, DynamicMaterialInstace);
+	CheckpointMesh->SetMaterial(0, DynamicMaterialInstance);
 	// 调用蓝图实现事件，传递动态材质实例，用于自定义激活动画
-	CheckpointReached(DynamicMaterialInstace);
+	CheckpointReached(DynamicMaterialInstance);
 }
