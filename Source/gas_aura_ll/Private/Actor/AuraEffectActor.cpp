@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 // Sets default values
@@ -15,9 +16,55 @@ AAuraEffectActor::AAuraEffectActor()
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
 }
 
+/**
+ * 每帧更新，用于驱动物品的浮动和旋转动画
+ * @param DeltaTime 上一帧到当前帧的时间间隔
+ */
+void AAuraEffectActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 累加运行时间，用于正弦波计算
+	RunningTime += DeltaTime;
+	// 根据周期常量计算正弦波的周期时长，当运行时间超过一个周期时重置
+	const float SinePeriod = 2 * PI / SinePeriodConstant;
+	if (RunningTime > SinePeriod)
+	{
+		RunningTime = 0.f;
+	}
+	// 执行实际的运动计算（位置、旋转）
+	ItemMovement(DeltaTime);
+}
+
 void AAuraEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 记录初始位置和旋转，用于后续动画计算
+	InitialLocation = GetActorLocation();
+	CalculatedLocation = InitialLocation;
+	CalculatedRotation = GetActorRotation();
+}
+
+/**
+ * 启用正弦波上下浮动
+ * 调用后 Actor 会沿 Z 轴做正弦波运动
+ */
+void AAuraEffectActor::StartSinusoidalMovement()
+{
+	bSinusoidalMovement = true;
+	InitialLocation = GetActorLocation();
+	CalculatedLocation = InitialLocation;
+}
+
+/**
+ * 启用持续旋转
+ * 调用后 Actor 会绕 Z 轴自动旋转
+ */
+void AAuraEffectActor::StartRotation()
+{
+	bRotates = true;
+	CalculatedRotation = GetActorRotation();
 }
 
 void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
@@ -117,5 +164,27 @@ void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
 		{
 			ActiveEffectHandles.FindAndRemoveChecked(Handle);
 		}
+	}
+}
+
+/**
+ * 根据当前设置更新 Actor 的位置和旋转
+ * 由 Tick 调用，实现正弦浮动和持续旋转效果
+ * @param DeltaTime 帧间隔时间，用于计算增量旋转角度
+ */
+void AAuraEffectActor::ItemMovement(float DeltaTime)
+{
+	// 若启用旋转，则绕 Z 轴（偏航）增加 RotationRate * DeltaTime 度
+	if (bRotates)
+	{
+		const FRotator DeltaRotation(0.f, DeltaTime * RotationRate, 0.f);
+		CalculatedRotation = UKismetMathLibrary::ComposeRotators(CalculatedRotation, DeltaRotation);
+	}
+
+	// 若启用正弦浮动，则在初始位置基础上沿 Z 轴做正弦波偏移
+	if (bSinusoidalMovement)
+	{
+		const float Sine = SineAmplitude * FMath::Sin(RunningTime * SinePeriodConstant);
+		CalculatedLocation = InitialLocation + FVector(0.f, 0.f, Sine);
 	}
 }
