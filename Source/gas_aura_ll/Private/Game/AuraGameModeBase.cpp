@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "Game/AuraGameInstance.h"
 #include "Game/LoadScreenSaveGame.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "gas_aura_ll/AuraLogChannels.h"
 #include "Interaction/SaveInterface.h"
@@ -139,7 +140,7 @@ void AAuraGameModeBase::SaveInGameProgressData(ULoadScreenSaveGame* SaveObject)
  */
 void AAuraGameModeBase::SaveWorldState(UWorld* World, const FString& DestinationMapAssetName) const
 {
-	// 获取世界名称，并去掉流式关卡前缀（如 UEDPIE_0_）
+	// 获取世界名称，并去掉流式关卡前缀
 	FString WorldName = World->GetMapName();
 	WorldName.RemoveFromStart(World->StreamingLevelsPrefix);
 
@@ -347,6 +348,15 @@ AActor* AAuraGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
 	}
 	// 未找到任何 PlayerStart
 	return nullptr;
+}
+
+void AAuraGameModeBase::PlayerDied(ACharacter* DeadCharacter)
+{
+	//获取存档数据
+	ULoadScreenSaveGame* SaveGame = RetrieveInGameSaveData();
+	if (!IsValid(SaveGame)) return;
+	//通过地图命名打开地图
+	UGameplayStatics::OpenLevel(DeadCharacter, FName(SaveGame->MapAssetName));
 }
 
 void AAuraGameModeBase::BeginPlay()
