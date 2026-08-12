@@ -9,7 +9,7 @@ public class gas_aura_ll : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[]
-			{ "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities" });
+			{ "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities","CommonUI" });
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 			{ "GameplayTags", "GameplayTasks", "NavigationSystem", "Niagara", "AIModule" });
