@@ -11,8 +11,10 @@ Build
 *.opendb
 *.sdf
 *.sln
+*.slnx
 *.suo
 *.xcodeproj
 *.xcworkspace
 /.idea
+opencode.json
 参考.md
