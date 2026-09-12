@@ -1,0 +1,23 @@
+---
+description: gas_aura_ll 项目的 UE/GAS 代码规范与命名约定；写或修改本项目 C++ 代码时应用
+alwaysApply: false
+enabled: true
+---
+
+# gas_aura_ll 代码规范（强制）
+
+写或修改本项目代码时遵守：
+
+- 命名前缀（Epic 规范）：`U`(UObject) / `A`(Actor) / `F`(结构体) / `E`(枚举) / `I`(接口实现) / `b`(布尔)；模块导出宏为 `GAS_AURA_LL_API`。
+- 目标引擎：**UE 5.8**。
+- 头文件放 `Source/gas_aura_ll/Public/**`，实现放 `Private/**`，按功能域分子目录（如 `AbilitySystem/`、`Character/`、`UI/`、`Input/`）。
+- `UObject*` 成员必须加 `UPROPERTY()`；新代码的 `UPROPERTY` 成员优先用 `TObjectPtr<T>`。
+- 不需要的 Tick 关闭：`bCanEverTick = false`；能用定时器就不要 `Tick + 计数器`。
+- **GameplayTag**：用 C++ 原生单例 **`FAuraGameplayTags::Get().Xxx`**（在 `AuraGameplayTags.cpp` 的 `InitializeNativeGameplayTags()` 中注册）；❌ 不要用 `RequestGameplayTag(FName("..."))`，也不要硬编码标签字符串。
+- 日志用 `LogAura`；❌ 不要用 `LogTemp`。
+- 🚫 **禁止中文 / 非 ASCII 文件名**（会导致 UnrealBuildTool 崩溃）。
+- 涉及属性集改动时，遵循 `UPROPERTY(...) FGameplayAttributeData X; ATTRIBUTE_ACCESSORS(...)` + `OnRep_X(...) const` 范式。
+
+详细规范与最新约定见 `docs/ue/conventions.md`，**修改代码前先读该文件**。
+
+（规范演进时更新 `docs/ue/conventions.md`，本规则保持精简。）

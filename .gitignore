@@ -18,3 +18,9 @@ Build
 /.idea
 opencode.json
 参考.md
+.mcp.json
+
+# AI 编程助手本地目录
+.opencode/
+.codebuddy/*
+!.codebuddy/rules/
