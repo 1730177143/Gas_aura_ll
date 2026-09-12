@@ -10,7 +10,7 @@
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include " Input/AuraInputComponent.h"
+#include "Input/AuraInputComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "Actor/MagicCircle.h"
 #include "Components/DecalComponent.h"
